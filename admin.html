@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMSTORE Admin Mobile</title>
+  <style>
+    :root {
+      --bg: #f7f2ea;
+      --card: #fffdfb;
+      --text: #171311;
+      --muted: #695e56;
+      --line: #eadfce;
+      --gold: #c6a466;
+      --gold-dark: #a67d3f;
+      --danger: #b33b30;
+      --success: #2d7a5c;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(180deg, #f8f3ef 0%, #efe5db 100%);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    .topbar {
+      background: #151311;
+      color: #f5efe9;
+      padding: 14px 16px;
+      text-align: center;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 16px 30px rgba(17, 17, 17, 0.06);
+      padding: 18px;
+      margin-top: 18px;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      font-size: clamp(1.8rem, 6vw, 2.5rem);
+      letter-spacing: -0.05em;
+      margin-bottom: 10px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #f5ebdb;
+      color: var(--gold-dark);
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    input, select, textarea, button {
+      font: inherit;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fbf7f3;
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      font-weight: 800;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    .primary {
+      background: linear-gradient(135deg, #d9b882, #b58b46);
+      color: #171312;
+      width: 100%;
+      padding: 14px 18px;
+    }
+
+    .secondary {
+      background: #f2e7d8;
+      color: #1b1a18;
+      padding: 10px 12px;
+      width: 100%;
+    }
+
+    .danger {
+      background: #f9e5e0;
+      color: var(--danger);
+      padding: 10px 12px;
+      width: 100%;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .error {
+      min-height: 16px;
+      margin: 10px 0;
+      color: var(--danger);
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .success {
+      min-height: 16px;
+      margin: 10px 0;
+      color: var(--success);
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .product-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .product-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .product-item strong { display: block; margin-bottom: 4px; }
+    .product-item small { display: block; color: var(--muted); margin-bottom: 8px; }
+    .admin-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .link {
+      display: inline-block;
+      margin-top: 16px;
+      color: var(--gold-dark);
+      font-weight: 700;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">IMSTORE Admin</div>
+
+  <div class="container">
+    <div id="loginView" class="card">
+      <span class="eyebrow">Connexion</span>
+      <h1>Admin mobile</h1>
+      <div class="field">
+        <label for="adminEmail">Identifiant</label>
+        <input id="adminEmail" type="text" placeholder="admin" value="admin" />
+      </div>
+      <div class="field">
+        <label for="adminPassword">Mot de passe</label>
+        <input id="adminPassword" type="password" placeholder="Mot de passe" />
+      </div>
+      <p class="error" id="loginError"></p>
+      <button class="primary" id="loginButton" type="button">Se connecter</button>
+    </div>
+
+    <div id="panelView" class="card" hidden>
+      <span class="eyebrow">Tableau de bord</span>
+      <h2>Produits</h2>
+
+      <div class="field">
+        <label for="productNameInput">Nom du produit</label>
+        <input id="productNameInput" type="text" placeholder="Nom du produit" />
+      </div>
+
+      <div class="field">
+        <label for="productPriceInput">Prix</label>
+        <input id="productPriceInput" type="number" placeholder="2999" />
+      </div>
+
+      <div class="field">
+        <label for="productCategoryInput">Catégorie</label>
+        <select id="productCategoryInput">
+          <option value="homme">Homme</option>
+          <option value="femme">Femme</option>
+          <option value="ensemble">Ensemble</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="productTagInput">Étiquette</label>
+        <input id="productTagInput" type="text" placeholder="Nouveau" />
+      </div>
+
+      <div class="field">
+        <label for="productImageInput">Photo</label>
+        <input id="productImageInput" type="file" accept="image/*" />
+      </div>
+
+      <div class="field">
+        <label for="productDescriptionInput">Description</label>
+        <textarea id="productDescriptionInput" placeholder="Décrivez votre produit..."></textarea>
+      </div>
+
+      <p class="error" id="productError"></p>
+      <p class="success" id="productSuccess"></p>
+
+      <button class="primary" id="publishProductButton" type="button">Publier le produit</button>
+
+      <div class="product-list" id="productList"></div>
+
+      <div class="admin-row">
+        <button class="secondary" id="logoutButton" type="button">Déconnexion</button>
+      </div>
+
+      <a class="link" href="/" target="_blank">Ouvrir la boutique</a>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_PRODUCTS = [
+      { id: 1, name: 'Costume Signature', category: 'homme', price: 249, tag: 'Best seller', image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=80', description: 'Coupe structurée et finition impeccable.' },
+      { id: 2, name: 'Robe Atelier', category: 'femme', price: 189, tag: 'Nouvelle', image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80', description: 'Robe fluide, élégante et sophistiquée.' },
+      { id: 3, name: 'Ensemble Luxe', category: 'ensemble', price: 319, tag: 'Premium', image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80', description: 'Un duo chic pensé pour un look moderne.' }
+    ];
+
+    const loginView = document.getElementById('loginView');
+    const panelView = document.getElementById('panelView');
+    const loginError = document.getElementById('loginError');
+    const productError = document.getElementById('productError');
+    const productSuccess = document.getElementById('productSuccess');
+    const productList = document.getElementById('productList');
+
+    async function getProducts() {
+      try {
+        const response = await fetch('/api/products');
+        if (!response.ok) throw new Error('API unavailable');
+        const data = await response.json();
+        return Array.isArray(data) && data.length ? data : DEFAULT_PRODUCTS;
+      } catch {
+        return DEFAULT_PRODUCTS;
+      }
+    }
+
+    async function saveProducts(products) {
+      return true;
+    }
+
+    async function renderProducts() {
+      const products = await getProducts();
+      productList.innerHTML = products.map(product => `
+        <div class="product-item">
+          <strong>${product.name}</strong>
+          <small>${product.tag} • ${product.category} • ${Number(product.price).toLocaleString('fr-DZ')} DZD</small>
+          <button class="danger" data-delete="${product.id}" type="button">Supprimer</button>
+        </div>
+      `).join('');
+    }
+
+    async function showPanel() {
+      loginView.hidden = true;
+      panelView.hidden = false;
+      await renderProducts();
+    }
+
+    function showLogin() {
+      loginView.hidden = false;
+      panelView.hidden = true;
+    }
+
+    function login() {
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value;
+
+      if (email === 'admin' && password === 'IMSTORE2026') {
+        localStorage.setItem('imstoreAdminMobile', 'true');
+        loginError.textContent = '';
+        showPanel();
+      } else {
+        loginError.textContent = 'Identifiant ou mot de passe incorrect.';
+      }
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Image non lisible'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function publishProduct() {
+      const name = document.getElementById('productNameInput').value.trim();
+      const price = Number(document.getElementById('productPriceInput').value);
+      const category = document.getElementById('productCategoryInput').value;
+      const tag = document.getElementById('productTagInput').value.trim() || 'Nouveau';
+      const description = document.getElementById('productDescriptionInput').value.trim();
+      const imageFile = document.getElementById('productImageInput').files[0];
+
+      if (!name || !price || !description || !imageFile) {
+        productError.textContent = 'Remplissez tous les champs et ajoutez une photo.';
+        productSuccess.textContent = '';
+        return;
+      }
+
+      try {
+        const imageData = await readFileAsDataUrl(imageFile);
+const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          category,
+          price,
+          tag,
+          image: imageData,
+          description
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur');
+      }
+
+      await renderProducts();
+
+        document.getElementById('productNameInput').value = '';
+        document.getElementById('productPriceInput').value = '';
+        document.getElementById('productTagInput').value = '';
+        document.getElementById('productImageInput').value = '';
+        document.getElementById('productDescriptionInput').value = '';
+
+        productError.textContent = '';
+        productSuccess.textContent = 'Produit publié avec succès.';
+      } catch (error) {
+        productError.textContent = 'Erreur lors de l’import de la photo.';
+        productSuccess.textContent = '';
+      }
+    }
+
+    document.getElementById('loginButton').addEventListener('click', login);
+    document.getElementById('logoutButton').addEventListener('click', () => {
+      localStorage.removeItem('imstoreAdminMobile');
+      showLogin();
+    });
+    document.getElementById('publishProductButton').addEventListener('click', publishProduct);
+
+    productList.addEventListener('click', async (event) => {
+      const btn = event.target.closest('[data-delete]');
+      if (!btn) return;
+      const id = Number(btn.dataset.delete);
+      await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      await renderProducts();
+    });
+
+    if (localStorage.getItem('imstoreAdminMobile') === 'true') {
+      showPanel();
+    } else {
+      showLogin();
+    }
+  </script>
+</body>
+</html>

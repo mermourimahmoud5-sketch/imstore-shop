@@ -1,0 +1,12 @@
+{
+  "name": "imstore-shared",
+  "version": "1.0.0",
+  "description": "Boutique IMSTORE avec admin et stockage partagé",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
