@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const { randomUUID } = require('crypto');
 const { Pool } = require('pg');
 
 const app = express();
@@ -82,6 +83,51 @@ app.delete('/api/products/:id', async (req, res) => {
   }
 });
 
+app.post('/api/designs', async (req, res) => {
+  const dataUrl = req.body && req.body.imageData;
+  const match = typeof dataUrl === 'string'
+    ? dataUrl.match(/^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]+={0,2})$/)
+    : null;
+
+  if (!match) {
+    return res.status(400).json({ error: 'Choisissez une image PNG, JPG ou WebP valide.' });
+  }
+
+  const imageBuffer = Buffer.from(match[2], 'base64');
+  if (!imageBuffer.length || imageBuffer.length > 5 * 1024 * 1024) {
+    return res.status(400).json({ error: 'La photo doit faire moins de 5 Mo.' });
+  }
+
+  const id = randomUUID();
+  try {
+    await pool.query(
+      'INSERT INTO design_uploads (id, content_type, image_data) VALUES ($1, $2, $3)',
+      [id, match[1], imageBuffer]
+    );
+    res.status(201).json({ url: `/api/designs/${id}` });
+  } catch (error) {
+    console.error('Erreur de sauvegarde du design :', error);
+    res.status(500).json({ error: 'Impossible d’enregistrer la photo du design.' });
+  }
+});
+
+app.get('/api/designs/:id', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT content_type, image_data FROM design_uploads WHERE id = $1',
+      [req.params.id]
+    );
+    if (!result.rowCount) return res.status(404).send('Design introuvable.');
+
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Cache-Control', 'private, max-age=3600');
+    res.type(result.rows[0].content_type).send(result.rows[0].image_data);
+  } catch (error) {
+    console.error('Erreur de lecture du design :', error);
+    res.status(500).send('Impossible de charger le design.');
+  }
+});
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -108,6 +154,15 @@ async function startServer() {
       sizes JSONB NOT NULL DEFAULT '[]'::jsonb,
       colors JSONB NOT NULL DEFAULT '[]'::jsonb,
       is_promotion BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS design_uploads (
+      id UUID PRIMARY KEY,
+      content_type TEXT NOT NULL,
+      image_data BYTEA NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);

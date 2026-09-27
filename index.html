@@ -83,6 +83,21 @@
 
     .nav-links a:hover { color: #fff; }
 
+    .whatsapp-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #128c7e;
+      color: #fff !important;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .nav-links .whatsapp-link:hover,
+    .nav-menu a.whatsapp-link:hover { background: #0d7669; }
+
     .menu-toggle {
       display: inline-flex;
       flex-direction: column;
@@ -898,6 +913,106 @@
       background: #f5ebdb;
     }
 
+    .field-hint {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .design-placement-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .design-placement-choice {
+      display: flex !important;
+      align-items: center;
+      gap: 10px;
+      margin: 0 !important;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbf7f3;
+      cursor: pointer;
+    }
+
+    .design-placement-choice:has(input:checked) {
+      border-color: var(--gold-dark);
+      background: #f5ebdb;
+    }
+
+    .design-placement-choice input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      accent-color: var(--gold-dark);
+    }
+
+    .design-preview-section {
+      display: grid;
+      justify-items: center;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 10px;
+      background: #f5f0e8;
+    }
+
+    .design-preview-section[hidden] { display: none; }
+
+    .design-preview-title { margin: 0; font-weight: 800; }
+
+    .design-preview-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    .design-preview-frame {
+      position: relative;
+      width: min(220px, 100%);
+      aspect-ratio: 4 / 5;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .design-preview-product,
+    .design-preview-artwork {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .design-preview-artwork {
+      left: 50%;
+      top: 38%;
+      width: 25%;
+      height: 25%;
+      transform: translateX(-50%);
+    }
+
+    .design-preview-artwork[data-placement="dos"] { top: 34%; }
+
+    .design-preview-position {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: rgba(17,17,17,0.8);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
     .checkout-total {
       display: none;
       margin-top: 4px;
@@ -979,11 +1094,13 @@
         <a href="#products" data-i18n="navNew">Nouveautés</a>
         <a href="#products" data-i18n="navCollections">Collections</a>
         <a href="#promotions" data-i18n="navBlog">Blog</a>
+        <a class="whatsapp-link" href="https://wa.me/213559093246" target="_blank" rel="noopener noreferrer" data-i18n="navContact">Contactez-nous</a>
       </nav>
       <nav class="nav-menu" id="navMenu" aria-label="Menu de la page">
         <a href="#about" data-i18n="navAbout">À propos de la page</a>
         <a href="#products" data-i18n="navProducts">Nos produits</a>
         <a href="#promotions" data-i18n="navPromos">Nos promotions</a>
+        <a class="whatsapp-link" href="https://wa.me/213559093246" target="_blank" rel="noopener noreferrer" data-i18n="navContact">Contactez-nous</a>
       </nav>
       <div class="nav-actions">
         <div class="lang-switch" aria-label="Sélecteur de langue">
@@ -1319,6 +1436,33 @@
           </select>
         </div>
         <div class="field">
+          <label for="designImageInput">Photo de votre design *</label>
+          <input id="designImageInput" type="file" accept="image/png,image/jpeg,image/webp" required />
+          <span class="field-hint">PNG, JPG ou WebP, 5 Mo maximum.</span>
+        </div>
+        <div class="field">
+          <label>Emplacement du design *</label>
+          <div class="design-placement-options">
+            <label class="design-placement-choice">
+              <input type="radio" name="designPlacement" value="avant" />
+              <span>Avant</span>
+            </label>
+            <label class="design-placement-choice">
+              <input type="radio" name="designPlacement" value="dos" />
+              <span>Dos</span>
+            </label>
+          </div>
+        </div>
+        <div class="design-preview-section" id="designPreviewSection" hidden aria-live="polite">
+          <p class="design-preview-title">Aperçu de votre t-shirt</p>
+          <div class="design-preview-frame">
+            <img class="design-preview-product" id="designPreviewProduct" alt="Produit choisi" />
+            <img class="design-preview-artwork" id="designPreviewArtwork" alt="Votre design" />
+            <span class="design-preview-position" id="designPreviewPosition"></span>
+          </div>
+          <p class="design-preview-note">Aperçu indicatif du placement sur la première photo du produit.</p>
+        </div>
+        <div class="field">
           <label>Mode de livraison *</label>
           <div class="delivery-options">
             <label class="delivery-option">
@@ -1358,6 +1502,7 @@
         navAbout: "À propos de la page",
         navProducts: "Nos produits",
         navPromos: "Nos promotions",
+        navContact: "Contactez-nous",
         adminAccess: "Espace admin",
         cartLabel: "Panier",
         heroEyebrow: "Mode luxe personnalisée",
@@ -1384,6 +1529,7 @@
         navAbout: "حول الصفحة",
         navProducts: "منتجاتنا",
         navPromos: "عروضنا",
+        navContact: "اتصل بنا",
         adminAccess: "مساحة الإدارة",
         cartLabel: "السلة",
         heroEyebrow: "أسلوب فاخر مخصص",
@@ -1543,6 +1689,11 @@
     const bureauDeliveryLabel = document.getElementById("bureauDeliveryLabel");
     const domicileDeliveryLabel = document.getElementById("domicileDeliveryLabel");
     const checkoutTotal = document.getElementById("checkoutTotal");
+    const designImageInput = document.getElementById("designImageInput");
+    const designPreviewSection = document.getElementById("designPreviewSection");
+    const designPreviewProduct = document.getElementById("designPreviewProduct");
+    const designPreviewArtwork = document.getElementById("designPreviewArtwork");
+    const designPreviewPosition = document.getElementById("designPreviewPosition");
     const orderEmail = "mermourimahmoud833@gmail.com";
 
     let selectedProductId = null;
@@ -1559,6 +1710,28 @@
         reader.onerror = () => reject(new Error("Impossible de lire l'image."));
         reader.readAsDataURL(file);
       });
+    }
+
+    function updateDesignPreview() {
+      const file = designImageInput.files[0];
+      const placement = document.querySelector('input[name="designPlacement"]:checked')?.value;
+      if (!file || !placement || !cart.length) {
+        designPreviewSection.hidden = true;
+        return;
+      }
+
+      const firstProduct = cart[0];
+      designPreviewProduct.src = firstProduct.images?.[0] || firstProduct.image;
+      designPreviewProduct.alt = `Aperçu de ${firstProduct.name}`;
+      if (designPreviewArtwork.dataset.objectUrl) {
+        URL.revokeObjectURL(designPreviewArtwork.dataset.objectUrl);
+      }
+      const objectUrl = URL.createObjectURL(file);
+      designPreviewArtwork.src = objectUrl;
+      designPreviewArtwork.dataset.objectUrl = objectUrl;
+      designPreviewArtwork.dataset.placement = placement;
+      designPreviewPosition.textContent = placement === "avant" ? "Avant" : "Dos";
+      designPreviewSection.hidden = false;
     }
 
     function applyAppearance() {
@@ -1626,6 +1799,7 @@
       document.getElementById("humanCheck").checked = false;
       document.getElementById("website").value = "";
       updateDeliveryOptions();
+      updateDesignPreview();
       checkoutOpenedAt = Date.now();
       checkoutModal.classList.add("open");
       checkoutModal.setAttribute("aria-hidden", "false");
@@ -2054,6 +2228,19 @@
     });
 
     customerCity.addEventListener("change", updateDeliveryOptions);
+    designImageInput.addEventListener("change", () => {
+      const file = designImageInput.files[0];
+      if (file && file.size > 5 * 1024 * 1024) {
+        designImageInput.value = "";
+        checkoutError.textContent = "La photo doit faire moins de 5 Mo.";
+      } else {
+        checkoutError.textContent = "";
+      }
+      updateDesignPreview();
+    });
+    document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
+      input.addEventListener("change", updateDesignPreview);
+    });
     document.querySelectorAll('input[name="deliveryMethod"]').forEach(input => {
       input.addEventListener("change", updateCheckoutTotal);
     });
@@ -2064,6 +2251,8 @@
       const customerAddress = document.getElementById("customerAddress").value.trim();
       const customerCity = document.getElementById("customerCity").value.trim();
       const selectedDeliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked');
+      const designFile = designImageInput.files[0];
+      const designPlacement = document.querySelector('input[name="designPlacement"]:checked')?.value;
       const humanCheck = document.getElementById("humanCheck").checked;
       const honeypotValue = document.getElementById("website").value.trim();
 
@@ -2074,6 +2263,21 @@
 
       if (!selectedDeliveryMethod) {
         checkoutError.textContent = "Choisissez un mode de livraison.";
+        return;
+      }
+
+      if (!designFile) {
+        checkoutError.textContent = "Ajoutez la photo de votre design.";
+        return;
+      }
+
+      if (!designPlacement) {
+        checkoutError.textContent = "Choisissez l’emplacement du design : avant ou dos.";
+        return;
+      }
+
+      if (!/^(image\/png|image\/jpeg|image\/webp)$/.test(designFile.type) || designFile.size > 5 * 1024 * 1024) {
+        checkoutError.textContent = "Choisissez une image PNG, JPG ou WebP de 5 Mo maximum.";
         return;
       }
 
@@ -2136,6 +2340,25 @@
       confirmButton.textContent = "Envoi de la commande...";
 
       try {
+        const imageData = await readFileAsDataUrl(designFile);
+        const uploadResponse = await fetch('/api/designs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageData })
+        });
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResponse.ok) throw new Error(uploadResult.error || "La photo n’a pas pu être enregistrée.");
+
+        const designUrl = new URL(uploadResult.url, window.location.origin).href;
+        const designPositionLabel = designPlacement === "avant" ? "Avant" : "Dos";
+        const designDetails = `Emplacement du design : ${designPositionLabel}\nPhoto du design : ${designUrl}`;
+        templateParams.order = `${templateParams.order}\n\n${designDetails}`;
+        templateParams.message = templateParams.order;
+        templateParams.order_details = `${templateParams.order_details}\n${designDetails}`;
+        templateParams.products = templateParams.order_details;
+        templateParams.design_placement = designPositionLabel;
+        templateParams.design_image_url = designUrl;
+
         await emailjs.send("service_546aau2", "template_riyvbb9", templateParams);
         checkoutError.className = "checkout-status";
         checkoutError.textContent = `Commande ${orderNumber} confirmée.`;
