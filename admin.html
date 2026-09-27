@@ -179,6 +179,30 @@
       font-weight: 700;
       text-decoration: none;
     }
+
+    .variant-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .variant-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 0.9rem;
+    }
+
+    .variant-option input {
+      width: auto;
+      margin: 0;
+      padding: 0;
+    }
   </style>
 </head>
 <body>
@@ -232,6 +256,32 @@
         <input id="productPromoInput" type="checkbox" />
         <span>Produit en promotion</span>
       </label>
+
+      <div class="field">
+        <label>Tailles disponibles *</label>
+        <div class="variant-options" id="productSizeOptions">
+          <label class="variant-option"><input type="checkbox" value="XS" /> XS</label>
+          <label class="variant-option"><input type="checkbox" value="S" /> S</label>
+          <label class="variant-option"><input type="checkbox" value="M" /> M</label>
+          <label class="variant-option"><input type="checkbox" value="L" /> L</label>
+          <label class="variant-option"><input type="checkbox" value="XL" /> XL</label>
+          <label class="variant-option"><input type="checkbox" value="XXL" /> XXL</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Couleurs disponibles *</label>
+        <div class="variant-options" id="productColorOptions">
+          <label class="variant-option"><input type="checkbox" value="Noir" /> Noir</label>
+          <label class="variant-option"><input type="checkbox" value="Blanc" /> Blanc</label>
+          <label class="variant-option"><input type="checkbox" value="Beige" /> Beige</label>
+          <label class="variant-option"><input type="checkbox" value="Crème" /> Crème</label>
+          <label class="variant-option"><input type="checkbox" value="Rouge" /> Rouge</label>
+          <label class="variant-option"><input type="checkbox" value="Bleu" /> Bleu</label>
+          <label class="variant-option"><input type="checkbox" value="Bleu roi" /> Bleu roi</label>
+          <label class="variant-option"><input type="checkbox" value="Sky bleu" /> Sky bleu</label>
+        </div>
+      </div>
 
       <div class="field">
         <label for="productImageInput">Photos</label>
@@ -339,9 +389,16 @@
       const isPromotion = document.getElementById('productPromoInput').checked;
       const description = document.getElementById('productDescriptionInput').value.trim();
       const imageFiles = Array.from(document.getElementById('productImageInput').files);
+      const sizes = Array.from(document.querySelectorAll('#productSizeOptions input:checked'), input => input.value);
+      const colors = Array.from(document.querySelectorAll('#productColorOptions input:checked'), input => input.value);
 
       if (!name || !price || !description || imageFiles.length === 0) {
         productError.textContent = 'Remplissez tous les champs et ajoutez au moins une photo.';
+        productSuccess.textContent = '';
+        return;
+      }
+      if (!sizes.length || !colors.length) {
+        productError.textContent = 'Choisissez au moins une taille et une couleur disponibles.';
         productSuccess.textContent = '';
         return;
       }
@@ -357,6 +414,8 @@
             price,
             tag,
             isPromotion,
+            sizes,
+            colors,
             image: images[0],
             images,
             description
@@ -375,6 +434,9 @@
         document.getElementById('productPromoInput').checked = false;
         document.getElementById('productImageInput').value = '';
         document.getElementById('productDescriptionInput').value = '';
+        document.querySelectorAll('#productSizeOptions input, #productColorOptions input').forEach(input => {
+          input.checked = false;
+        });
 
         productError.textContent = '';
         productSuccess.textContent = 'Produit publié avec succès.';

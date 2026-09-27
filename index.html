@@ -523,6 +523,31 @@
       margin-top: 2px;
     }
 
+    .variant-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .variant-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 0.9rem;
+    }
+
+    .variant-option input {
+      width: auto;
+      margin: 0;
+      padding: 0;
+    }
+
     .product-option {
       display: flex;
       flex-direction: column;
@@ -1164,6 +1189,30 @@
             <input id="productTagInput" type="text" placeholder="Nouveau" />
           </div>
           <div class="field">
+            <label>Tailles disponibles *</label>
+            <div class="variant-options" id="productSizeOptions">
+              <label class="variant-option"><input type="checkbox" value="XS" /> XS</label>
+              <label class="variant-option"><input type="checkbox" value="S" /> S</label>
+              <label class="variant-option"><input type="checkbox" value="M" /> M</label>
+              <label class="variant-option"><input type="checkbox" value="L" /> L</label>
+              <label class="variant-option"><input type="checkbox" value="XL" /> XL</label>
+              <label class="variant-option"><input type="checkbox" value="XXL" /> XXL</label>
+            </div>
+          </div>
+          <div class="field">
+            <label>Couleurs disponibles *</label>
+            <div class="variant-options" id="productColorOptions">
+              <label class="variant-option"><input type="checkbox" value="Noir" /> Noir</label>
+              <label class="variant-option"><input type="checkbox" value="Blanc" /> Blanc</label>
+              <label class="variant-option"><input type="checkbox" value="Beige" /> Beige</label>
+              <label class="variant-option"><input type="checkbox" value="Crème" /> Crème</label>
+              <label class="variant-option"><input type="checkbox" value="Rouge" /> Rouge</label>
+              <label class="variant-option"><input type="checkbox" value="Bleu" /> Bleu</label>
+              <label class="variant-option"><input type="checkbox" value="Bleu roi" /> Bleu roi</label>
+              <label class="variant-option"><input type="checkbox" value="Sky bleu" /> Sky bleu</label>
+            </div>
+          </div>
+          <div class="field">
             <label for="productImageInput">Photos du produit</label>
             <input id="productImageInput" type="file" accept="image/*" multiple />
           </div>
@@ -1622,6 +1671,7 @@
       productContainer.innerHTML = "";
       const filteredProducts = filter === "all" ? products : products.filter(product => product.category === filter);
 
+      const allSizes = ["XS", "S", "M", "L", "XL", "XXL"];
       const colorMap = {
         Noir: "#111111",
         Blanc: "#f4efe6",
@@ -1637,8 +1687,10 @@
         const card = document.createElement("article");
         card.className = "product-card";
         const productImages = product.images && product.images.length ? product.images : [product.image];
-        const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL"];
-        const colorOptions = ["Noir", "Blanc", "Beige", "Crème", "Rouge", "Bleu", "Bleu roi", "Sky bleu"];
+        const sizeOptions = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : allSizes;
+        const colorOptions = Array.isArray(product.colors) && product.colors.length ? product.colors : Object.keys(colorMap);
+        const defaultSize = sizeOptions[0];
+        const defaultColor = colorOptions[0];
         const tagLabel = product.isPromotion ? "Promotion" : (product.tag || "Nouveau");
 
         card.innerHTML = `
@@ -1656,9 +1708,9 @@
                   ${sizeOptions.map(size => `
                     <button
                       type="button"
-                      class="product-choice product-size-choice ${size === "M" ? "selected" : ""}"
+                      class="product-choice product-size-choice ${size === defaultSize ? "selected" : ""}"
                       data-size="${size}"
-                      aria-pressed="${size === "M" ? "true" : "false"}"
+                      aria-pressed="${size === defaultSize ? "true" : "false"}"
                     >${size}</button>
                   `).join("")}
                 </div>
@@ -1669,11 +1721,11 @@
                   ${colorOptions.map(color => `
                     <button
                       type="button"
-                      class="product-choice product-color-choice ${color === "Noir" ? "selected" : ""}"
+                      class="product-choice product-color-choice ${color === defaultColor ? "selected" : ""}"
                       data-color="${color}"
                       aria-label="${color}"
                       title="${color}"
-                      aria-pressed="${color === "Noir" ? "true" : "false"}"
+                      aria-pressed="${color === defaultColor ? "true" : "false"}"
                       style="background:${colorMap[color]};"
                     ></button>
                   `).join("")}
@@ -1763,6 +1815,10 @@
       const product = products.find(item => item.id === productId);
       if (!product) return;
 
+      const availableSizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ["XS", "S", "M", "L", "XL", "XXL"];
+      const availableColors = Array.isArray(product.colors) && product.colors.length ? product.colors : ["Noir", "Blanc", "Beige", "Crème", "Rouge", "Bleu", "Bleu roi", "Sky bleu"];
+      sizeSelect.innerHTML = availableSizes.map(size => `<option value="${size}">${size}</option>`).join("");
+      colorSelect.innerHTML = availableColors.map(color => `<option value="${color}">${color}</option>`).join("");
       modalTitle.textContent = `Personnaliser : ${product.name}`;
       modal.classList.add("open");
       modal.setAttribute("aria-hidden", "false");
@@ -1930,8 +1986,14 @@
       const price = Number(document.getElementById("productPriceInput").value);
       const imageFiles = Array.from(document.getElementById("productImageInput").files);
       const description = document.getElementById("productDescriptionInput").value.trim();
+      const sizes = Array.from(document.querySelectorAll('#productSizeOptions input:checked'), input => input.value);
+      const colors = Array.from(document.querySelectorAll('#productColorOptions input:checked'), input => input.value);
       if (!name || !price || imageFiles.length === 0 || !description) {
         productError.textContent = "Remplissez tous les champs obligatoires.";
+        return;
+      }
+      if (!sizes.length || !colors.length) {
+        productError.textContent = "Choisissez au moins une taille et une couleur disponibles.";
         return;
       }
 
@@ -1941,6 +2003,8 @@
         category: document.getElementById("productCategoryInput").value,
         price,
         tag: document.getElementById("productTagInput").value.trim() || "Nouveau",
+        sizes,
+        colors,
         image: images[0],
         images,
         description
@@ -1959,6 +2023,9 @@
       document.getElementById("productTagInput").value = "";
       document.getElementById("productImageInput").value = "";
       document.getElementById("productDescriptionInput").value = "";
+      document.querySelectorAll('#productSizeOptions input, #productColorOptions input').forEach(input => {
+        input.checked = false;
+      });
       productError.textContent = "Produit publié avec succès.";
     });
 
