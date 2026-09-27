@@ -48,7 +48,7 @@ app.get('/api/products', (req, res) => {
 });
 
 app.post('/api/products', (req, res) => {
-  const { name, category, price, tag, image, description, images } = req.body || {};
+  const { name, category, price, tag, image, description, images, isPromotion } = req.body || {};
 
   if (!name || !category || !price || !description || !image) {
     return res.status(400).json({ error: 'Tous les champs obligatoires sont requis.' });
@@ -63,7 +63,8 @@ app.post('/api/products', (req, res) => {
     tag: String(tag || 'Nouveau').trim(),
     image: String(image),
     description: String(description).trim(),
-    images: Array.isArray(images) && images.length ? images : [String(image)]
+    images: Array.isArray(images) && images.length ? images : [String(image)],
+    isPromotion: Boolean(isPromotion === true || isPromotion === 'true' || isPromotion === 1 || isPromotion === '1')
   };
 
   products.unshift(newProduct);

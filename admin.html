@@ -234,8 +234,8 @@
       </label>
 
       <div class="field">
-        <label for="productImageInput">Photo</label>
-        <input id="productImageInput" type="file" accept="image/*" />
+        <label for="productImageInput">Photos</label>
+        <input id="productImageInput" type="file" accept="image/*" multiple />
       </div>
 
       <div class="field">
@@ -338,35 +338,36 @@
       const tag = document.getElementById('productTagInput').value.trim() || 'Nouveau';
       const isPromotion = document.getElementById('productPromoInput').checked;
       const description = document.getElementById('productDescriptionInput').value.trim();
-      const imageFile = document.getElementById('productImageInput').files[0];
+      const imageFiles = Array.from(document.getElementById('productImageInput').files);
 
-      if (!name || !price || !description || !imageFile) {
-        productError.textContent = 'Remplissez tous les champs et ajoutez une photo.';
+      if (!name || !price || !description || imageFiles.length === 0) {
+        productError.textContent = 'Remplissez tous les champs et ajoutez au moins une photo.';
         productSuccess.textContent = '';
         return;
       }
 
       try {
-        const imageData = await readFileAsDataUrl(imageFile);
-const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          category,
-          price,
-          tag,
-          isPromotion,
-          image: imageData,
-          description
-        })
-      });
+        const images = await Promise.all(imageFiles.map(readFileAsDataUrl));
+        const response = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            category,
+            price,
+            tag,
+            isPromotion,
+            image: images[0],
+            images,
+            description
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error('Erreur');
-      }
+        if (!response.ok) {
+          throw new Error('Erreur');
+        }
 
-      await renderProducts();
+        await renderProducts();
 
         document.getElementById('productNameInput').value = '';
         document.getElementById('productPriceInput').value = '';
@@ -378,7 +379,7 @@ const response = await fetch('/api/products', {
         productError.textContent = '';
         productSuccess.textContent = 'Produit publié avec succès.';
       } catch (error) {
-        productError.textContent = 'Erreur lors de l’import de la photo.';
+        productError.textContent = 'Erreur lors de l’import des photos.';
         productSuccess.textContent = '';
       }
     }
