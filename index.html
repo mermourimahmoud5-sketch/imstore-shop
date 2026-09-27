@@ -496,6 +496,12 @@
       text-transform: uppercase;
     }
 
+    .tag.promo-tag {
+      background: rgba(219, 39, 39, 0.12);
+      color: #ff5252;
+      border: 1px solid rgba(255, 82, 82, 0.35);
+    }
+
     .product-name {
       margin: 0;
       font-size: 1.25rem;
@@ -1633,13 +1639,14 @@
         const productImages = product.images && product.images.length ? product.images : [product.image];
         const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL"];
         const colorOptions = ["Noir", "Blanc", "Beige", "Crème", "Rouge", "Bleu", "Bleu roi", "Sky bleu"];
+        const tagLabel = product.isPromotion ? "Promotion" : (product.tag || "Nouveau");
 
         card.innerHTML = `
           <div class="product-gallery">
             ${productImages.map((image, index) => `<img src="${image}" alt="${product.name} - photo ${index + 1}" />`).join("")}
           </div>
           <div class="product-info">
-            <span class="tag">${product.tag}</span>
+            <span class="tag ${product.isPromotion ? 'promo-tag' : ''}">${tagLabel}</span>
             <h3 class="product-name">${product.name}</h3>
             <p class="product-desc">${product.description}</p>
             <div class="product-options">

@@ -228,6 +228,11 @@
         <input id="productTagInput" type="text" placeholder="Nouveau" />
       </div>
 
+      <label class="checkbox-field" for="productPromoInput">
+        <input id="productPromoInput" type="checkbox" />
+        <span>Produit en promotion</span>
+      </label>
+
       <div class="field">
         <label for="productImageInput">Photo</label>
         <input id="productImageInput" type="file" accept="image/*" />
@@ -287,7 +292,7 @@
       productList.innerHTML = products.map(product => `
         <div class="product-item">
           <strong>${product.name}</strong>
-          <small>${product.tag} • ${product.category} • ${Number(product.price).toLocaleString('fr-DZ')} DZD</small>
+          <small>${product.isPromotion ? 'PROMO' : product.tag} • ${product.category} • ${Number(product.price).toLocaleString('fr-DZ')} DZD</small>
           <button class="danger" data-delete="${product.id}" type="button">Supprimer</button>
         </div>
       `).join('');
@@ -331,6 +336,7 @@
       const price = Number(document.getElementById('productPriceInput').value);
       const category = document.getElementById('productCategoryInput').value;
       const tag = document.getElementById('productTagInput').value.trim() || 'Nouveau';
+      const isPromotion = document.getElementById('productPromoInput').checked;
       const description = document.getElementById('productDescriptionInput').value.trim();
       const imageFile = document.getElementById('productImageInput').files[0];
 
@@ -350,6 +356,7 @@ const response = await fetch('/api/products', {
           category,
           price,
           tag,
+          isPromotion,
           image: imageData,
           description
         })
@@ -364,6 +371,7 @@ const response = await fetch('/api/products', {
         document.getElementById('productNameInput').value = '';
         document.getElementById('productPriceInput').value = '';
         document.getElementById('productTagInput').value = '';
+        document.getElementById('productPromoInput').checked = false;
         document.getElementById('productImageInput').value = '';
         document.getElementById('productDescriptionInput').value = '';
 
