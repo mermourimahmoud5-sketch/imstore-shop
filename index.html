@@ -2010,23 +2010,29 @@
         description
       };
 
-      await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      try {
+        const response = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "La publication a échoué.");
 
-      await loadProducts();
-      renderAdminProducts();
-      document.getElementById("productNameInput").value = "";
-      document.getElementById("productPriceInput").value = "";
-      document.getElementById("productTagInput").value = "";
-      document.getElementById("productImageInput").value = "";
-      document.getElementById("productDescriptionInput").value = "";
-      document.querySelectorAll('#productSizeOptions input, #productColorOptions input').forEach(input => {
-        input.checked = false;
-      });
-      productError.textContent = "Produit publié avec succès.";
+        await loadProducts();
+        renderAdminProducts();
+        document.getElementById("productNameInput").value = "";
+        document.getElementById("productPriceInput").value = "";
+        document.getElementById("productTagInput").value = "";
+        document.getElementById("productImageInput").value = "";
+        document.getElementById("productDescriptionInput").value = "";
+        document.querySelectorAll('#productSizeOptions input, #productColorOptions input').forEach(input => {
+          input.checked = false;
+        });
+        productError.textContent = "Produit publié avec succès.";
+      } catch (error) {
+        productError.textContent = error.message || "La publication a échoué.";
+      }
     });
 
     document.getElementById("checkoutBtn").addEventListener("click", openCheckoutModal);
