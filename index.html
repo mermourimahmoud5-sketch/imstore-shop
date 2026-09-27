@@ -98,6 +98,36 @@
     .nav-links .whatsapp-link:hover,
     .nav-menu a.whatsapp-link:hover { background: #0d7669; }
 
+    .tiktok-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #f5f5f5;
+      color: #111 !important;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .nav-links .tiktok-link:hover,
+    .nav-menu a.tiktok-link:hover { background: #dedede; }
+
+    .instagram-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #c13584;
+      color: #fff !important;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .nav-links .instagram-link:hover,
+    .nav-menu a.instagram-link:hover { background: #a62d72; }
+
     .menu-toggle {
       display: inline-flex;
       flex-direction: column;
@@ -434,15 +464,43 @@
 
     .product-gallery {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-      gap: 2px;
-      background: var(--line);
+      gap: 8px;
+      padding: 8px;
+      background: #fff;
     }
 
-    .product-gallery img {
-      min-width: 0;
+    .product-gallery .product-main-image {
+      height: 280px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .product-photo-picker {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .product-photo-choice {
+      flex: 0 0 58px;
+      width: 58px;
+      height: 58px;
+      padding: 0;
+      overflow: hidden;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background: #fff;
       cursor: pointer;
-      transition: filter 0.25s ease, transform 0.25s ease;
+    }
+
+    .product-photo-choice.selected { border-color: var(--gold-dark); }
+
+    .product-photo-choice img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      cursor: pointer;
     }
 
     .photo-lightbox {
@@ -992,14 +1050,47 @@
     }
 
     .design-preview-artwork {
-      left: 50%;
-      top: 38%;
-      width: 25%;
-      height: 25%;
-      transform: translateX(-50%);
+      left: var(--design-x, 50%);
+      top: var(--design-y, 38%);
+      width: var(--design-size, 25%);
+      height: var(--design-size, 25%);
+      transform: translate(-50%, -50%);
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
     }
 
-    .design-preview-artwork[data-placement="dos"] { top: 34%; }
+    .design-preview-artwork:active { cursor: grabbing; }
+
+    .design-editor-controls {
+      display: grid;
+      width: min(350px, 100%);
+      gap: 8px;
+    }
+
+    .design-editor-control {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4px 10px;
+      align-items: center;
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .design-editor-control input {
+      grid-column: 1 / -1;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      accent-color: var(--gold-dark);
+      cursor: pointer;
+    }
+
+    .design-editor-control output {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
 
     .design-preview-position {
       position: absolute;
@@ -1095,12 +1186,16 @@
         <a href="#products" data-i18n="navCollections">Collections</a>
         <a href="#promotions" data-i18n="navBlog">Blog</a>
         <a class="whatsapp-link" href="https://wa.me/213559093246" target="_blank" rel="noopener noreferrer" data-i18n="navContact">Contactez-nous</a>
+        <a class="tiktok-link" href="https://www.tiktok.com/@im.store06" target="_blank" rel="noopener noreferrer" data-i18n="navTikTok">TikTok</a>
+        <a class="instagram-link" href="https://www.instagram.com/im.__design_/" target="_blank" rel="noopener noreferrer" data-i18n="navInstagram">Instagram</a>
       </nav>
       <nav class="nav-menu" id="navMenu" aria-label="Menu de la page">
         <a href="#about" data-i18n="navAbout">À propos de la page</a>
         <a href="#products" data-i18n="navProducts">Nos produits</a>
         <a href="#promotions" data-i18n="navPromos">Nos promotions</a>
         <a class="whatsapp-link" href="https://wa.me/213559093246" target="_blank" rel="noopener noreferrer" data-i18n="navContact">Contactez-nous</a>
+        <a class="tiktok-link" href="https://www.tiktok.com/@im.store06" target="_blank" rel="noopener noreferrer" data-i18n="navTikTok">TikTok</a>
+        <a class="instagram-link" href="https://www.instagram.com/im.__design_/" target="_blank" rel="noopener noreferrer" data-i18n="navInstagram">Instagram</a>
       </nav>
       <div class="nav-actions">
         <div class="lang-switch" aria-label="Sélecteur de langue">
@@ -1460,7 +1555,24 @@
             <img class="design-preview-artwork" id="designPreviewArtwork" alt="Votre design" />
             <span class="design-preview-position" id="designPreviewPosition"></span>
           </div>
-          <p class="design-preview-note">Aperçu indicatif du placement sur la première photo du produit.</p>
+          <div class="design-editor-controls">
+            <label class="design-editor-control" for="designSizeInput">
+              <span>Taille du motif</span>
+              <output id="designSizeOutput" for="designSizeInput">25 %</output>
+              <input id="designSizeInput" type="range" min="10" max="70" step="1" value="25" />
+            </label>
+            <label class="design-editor-control" for="designXInput">
+              <span>Position horizontale</span>
+              <output id="designXOutput" for="designXInput">50 %</output>
+              <input id="designXInput" type="range" min="10" max="90" step="1" value="50" />
+            </label>
+            <label class="design-editor-control" for="designYInput">
+              <span>Position verticale</span>
+              <output id="designYOutput" for="designYInput">38 %</output>
+              <input id="designYInput" type="range" min="10" max="90" step="1" value="38" />
+            </label>
+          </div>
+          <p class="design-preview-note">Déplacez le motif sur l’image ou utilisez les curseurs pour le placer précisément.</p>
         </div>
         <div class="field">
           <label>Mode de livraison *</label>
@@ -1503,6 +1615,8 @@
         navProducts: "Nos produits",
         navPromos: "Nos promotions",
         navContact: "Contactez-nous",
+        navTikTok: "TikTok",
+        navInstagram: "Instagram",
         adminAccess: "Espace admin",
         cartLabel: "Panier",
         heroEyebrow: "Mode luxe personnalisée",
@@ -1530,6 +1644,8 @@
         navProducts: "منتجاتنا",
         navPromos: "عروضنا",
         navContact: "اتصل بنا",
+        navTikTok: "تيك توك",
+        navInstagram: "إنستغرام",
         adminAccess: "مساحة الإدارة",
         cartLabel: "السلة",
         heroEyebrow: "أسلوب فاخر مخصص",
@@ -1691,12 +1807,26 @@
     const checkoutTotal = document.getElementById("checkoutTotal");
     const designImageInput = document.getElementById("designImageInput");
     const designPreviewSection = document.getElementById("designPreviewSection");
+    const designPreviewFrame = document.querySelector(".design-preview-frame");
     const designPreviewProduct = document.getElementById("designPreviewProduct");
     const designPreviewArtwork = document.getElementById("designPreviewArtwork");
     const designPreviewPosition = document.getElementById("designPreviewPosition");
+    const designSizeInput = document.getElementById("designSizeInput");
+    const designSizeOutput = document.getElementById("designSizeOutput");
+    const designXInput = document.getElementById("designXInput");
+    const designXOutput = document.getElementById("designXOutput");
+    const designYInput = document.getElementById("designYInput");
+    const designYOutput = document.getElementById("designYOutput");
     const orderEmail = "mermourimahmoud833@gmail.com";
 
     let selectedProductId = null;
+    let selectedProductImage = null;
+    let selectedProductImageIndex = 0;
+    let designScale = 25;
+    let designX = 50;
+    let designY = 38;
+    let previewedDesignFile = null;
+    let designPreviewObjectUrl = null;
     let checkoutOpenedAt = 0;
 
     function formatPrice(price) {
@@ -1712,6 +1842,25 @@
       });
     }
 
+    function updateDesignTransform() {
+      const margin = designScale / 2;
+      designX = Math.max(margin, Math.min(100 - margin, designX));
+      designY = Math.max(margin, Math.min(100 - margin, designY));
+      designPreviewFrame.style.setProperty("--design-x", `${designX}%`);
+      designPreviewFrame.style.setProperty("--design-y", `${designY}%`);
+      designPreviewFrame.style.setProperty("--design-size", `${designScale}%`);
+      designSizeInput.value = String(designScale);
+      designSizeOutput.textContent = `${designScale} %`;
+      designXInput.min = String(margin);
+      designXInput.max = String(100 - margin);
+      designXInput.value = String(designX);
+      designXOutput.textContent = `${Math.round(designX)} %`;
+      designYInput.min = String(margin);
+      designYInput.max = String(100 - margin);
+      designYInput.value = String(designY);
+      designYOutput.textContent = `${Math.round(designY)} %`;
+    }
+
     function updateDesignPreview() {
       const file = designImageInput.files[0];
       const placement = document.querySelector('input[name="designPlacement"]:checked')?.value;
@@ -1721,18 +1870,49 @@
       }
 
       const firstProduct = cart[0];
-      designPreviewProduct.src = firstProduct.images?.[0] || firstProduct.image;
+      designPreviewProduct.src = firstProduct.selectedImage || firstProduct.images?.[0] || firstProduct.image;
       designPreviewProduct.alt = `Aperçu de ${firstProduct.name}`;
-      if (designPreviewArtwork.dataset.objectUrl) {
-        URL.revokeObjectURL(designPreviewArtwork.dataset.objectUrl);
+      if (previewedDesignFile !== file) {
+        if (designPreviewObjectUrl) URL.revokeObjectURL(designPreviewObjectUrl);
+        designPreviewObjectUrl = URL.createObjectURL(file);
+        previewedDesignFile = file;
+        designPreviewArtwork.src = designPreviewObjectUrl;
       }
-      const objectUrl = URL.createObjectURL(file);
-      designPreviewArtwork.src = objectUrl;
-      designPreviewArtwork.dataset.objectUrl = objectUrl;
       designPreviewArtwork.dataset.placement = placement;
       designPreviewPosition.textContent = placement === "avant" ? "Avant" : "Dos";
+      updateDesignTransform();
       designPreviewSection.hidden = false;
     }
+
+    designPreviewArtwork.addEventListener("pointerdown", event => {
+      if (designPreviewSection.hidden) return;
+      event.preventDefault();
+      designPreviewArtwork.setPointerCapture(event.pointerId);
+    });
+
+    designPreviewArtwork.addEventListener("pointermove", event => {
+      if (!designPreviewArtwork.hasPointerCapture(event.pointerId)) return;
+      const bounds = designPreviewFrame.getBoundingClientRect();
+      designX = ((event.clientX - bounds.left) / bounds.width) * 100;
+      designY = ((event.clientY - bounds.top) / bounds.height) * 100;
+      updateDesignTransform();
+    });
+
+    designScale = Number(designSizeInput.value);
+    designX = Number(designXInput.value);
+    designY = Number(designYInput.value);
+    designSizeInput.addEventListener("input", () => {
+      designScale = Number(designSizeInput.value);
+      updateDesignTransform();
+    });
+    designXInput.addEventListener("input", () => {
+      designX = Number(designXInput.value);
+      updateDesignTransform();
+    });
+    designYInput.addEventListener("input", () => {
+      designY = Number(designYInput.value);
+      updateDesignTransform();
+    });
 
     function applyAppearance() {
       const backgroundUrl = localStorage.getItem("imstoreBackground") || "";
@@ -1869,7 +2049,16 @@
 
         card.innerHTML = `
           <div class="product-gallery">
-            ${productImages.map((image, index) => `<img src="${image}" alt="${product.name} - photo ${index + 1}" />`).join("")}
+            <img class="product-main-image" data-photo-index="0" src="${productImages[0]}" alt="${product.name} - photo 1" />
+            ${productImages.length > 1 ? `
+              <div class="product-photo-picker" role="group" aria-label="Choisir une photo de ${product.name}">
+                ${productImages.map((image, index) => `
+                  <button class="product-photo-choice ${index === 0 ? "selected" : ""}" type="button" data-photo-index="${index}" aria-label="Choisir la photo ${index + 1}" aria-pressed="${index === 0 ? "true" : "false"}">
+                    <img src="${image}" alt="" />
+                  </button>
+                `).join("")}
+              </div>
+            ` : ""}
           </div>
           <div class="product-info">
             <span class="tag ${product.isPromotion ? 'promo-tag' : ''}">${tagLabel}</span>
@@ -1920,16 +2109,26 @@
       });
     }
 
-    function addToCart(productId, custom = {}) {
+    function addToCart(productId, custom = {}, selectedImage = null, selectedImageIndex = 0) {
       const product = products.find(item => item.id === productId);
       if (!product) return;
 
-      const existing = cart.find(item => item.id === productId && JSON.stringify(item.custom) === JSON.stringify(custom));
+      const existing = cart.find(item =>
+        item.id === productId &&
+        JSON.stringify(item.custom) === JSON.stringify(custom) &&
+        item.selectedImageIndex === selectedImageIndex
+      );
 
       if (existing) {
         existing.quantity += 1;
       } else {
-        cart.push({ ...product, quantity: 1, custom });
+        cart.push({
+          ...product,
+          quantity: 1,
+          custom,
+          selectedImage: selectedImage || product.image,
+          selectedImageIndex
+        });
       }
 
       renderCart();
@@ -1962,10 +2161,10 @@
           const customInfo = item.custom && Object.keys(item.custom).length ? `Taille: ${item.custom.size} • Matière: ${item.custom.fabric}` : "Finition standard";
 
           itemEl.innerHTML = `
-            <img src="${item.image}" alt="${item.name}" />
+            <img src="${item.selectedImage || item.image}" alt="${item.name} - photo ${(item.selectedImageIndex || 0) + 1}" />
             <div class="cart-item-info">
               <div class="cart-item-name">${item.name}</div>
-              <div class="cart-item-meta">${customInfo}<br />${item.custom.color || "Couleur standard"}</div>
+              <div class="cart-item-meta">${customInfo}<br />${item.custom.color || "Couleur standard"}<br />Photo ${(item.selectedImageIndex || 0) + 1}</div>
               <div class="cart-item-price">${formatPrice(item.price)}</div>
               <div class="qty-box">
                 <button data-action="decrease" data-id="${item.id}" data-custom='${JSON.stringify(item.custom)}'>-</button>
@@ -1984,10 +2183,14 @@
       cartCount.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
     }
 
-    function openModal(productId) {
+    function openModal(productId, card) {
       selectedProductId = productId;
       const product = products.find(item => item.id === productId);
       if (!product) return;
+
+      const mainImage = card?.querySelector(".product-main-image");
+      selectedProductImage = mainImage?.getAttribute("src") || product.image;
+      selectedProductImageIndex = Number(mainImage?.dataset.photoIndex || 0);
 
       const availableSizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ["XS", "S", "M", "L", "XL", "XXL"];
       const availableColors = Array.isArray(product.colors) && product.colors.length ? product.colors : ["Noir", "Blanc", "Beige", "Crème", "Rouge", "Bleu", "Bleu roi", "Sky bleu"];
@@ -2002,10 +2205,28 @@
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden", "true");
       selectedProductId = null;
+      selectedProductImage = null;
+      selectedProductImageIndex = 0;
       noteInput.value = "";
     }
 
     document.addEventListener("click", function (event) {
+      const photoChoice = event.target.closest(".product-photo-choice");
+      if (photoChoice) {
+        const gallery = photoChoice.closest(".product-gallery");
+        const mainImage = gallery.querySelector(".product-main-image");
+        const selectedIndex = photoChoice.dataset.photoIndex;
+        mainImage.src = photoChoice.querySelector("img").getAttribute("src");
+        mainImage.alt = `${gallery.closest(".product-card").querySelector(".product-name").textContent} - photo ${Number(selectedIndex) + 1}`;
+        mainImage.dataset.photoIndex = selectedIndex;
+        gallery.querySelectorAll(".product-photo-choice").forEach(button => {
+          const selected = button === photoChoice;
+          button.classList.toggle("selected", selected);
+          button.setAttribute("aria-pressed", String(selected));
+        });
+        return;
+      }
+
       const sizeChoice = event.target.closest(".product-size-choice");
       if (sizeChoice) {
         const group = sizeChoice.closest("[data-product-size-group]");
@@ -2041,9 +2262,15 @@
           const card = actionBtn.closest(".product-card");
           const size = card ? card.querySelector(".product-size-choice.selected")?.dataset.size || "M" : "M";
           const color = card ? card.querySelector(".product-color-choice.selected")?.dataset.color || "Noir" : "Noir";
-          addToCart(id, { size, color, fabric: "Coton premium", note: "" });
+          const mainImage = card?.querySelector(".product-main-image");
+          addToCart(
+            id,
+            { size, color, fabric: "Coton premium", note: "" },
+            mainImage?.getAttribute("src"),
+            Number(mainImage?.dataset.photoIndex || 0)
+          );
         }
-        if (action === "customize") openModal(id);
+        if (action === "customize") openModal(id, actionBtn.closest(".product-card"));
 
         if (action === "increase") {
           const custom = event.target.dataset.custom ? JSON.parse(event.target.dataset.custom) : {};
@@ -2098,7 +2325,7 @@
         note: noteInput.value.trim()
       };
 
-      addToCart(selectedProductId, custom);
+      addToCart(selectedProductId, custom, selectedProductImage, selectedProductImageIndex);
       closeModal();
     });
 
@@ -2239,7 +2466,10 @@
       updateDesignPreview();
     });
     document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
-      input.addEventListener("change", updateDesignPreview);
+      input.addEventListener("change", () => {
+        designY = input.value === "avant" ? 38 : 34;
+        updateDesignPreview();
+      });
     });
     document.querySelectorAll('input[name="deliveryMethod"]').forEach(input => {
       input.addEventListener("change", updateCheckoutTotal);
@@ -2294,7 +2524,7 @@
         const size = item.custom?.size || "M";
         const color = item.custom?.color || "Couleur standard";
         const fabric = item.custom?.fabric || "Matière standard";
-        return `${item.name} x${item.quantity} • Taille: ${size} • Couleur: ${color} • Matière: ${fabric} • ${formatPrice(item.price * item.quantity)}`;
+        return `${item.name} x${item.quantity} • Photo: ${Number(item.selectedImageIndex || 0) + 1} • Taille: ${size} • Couleur: ${color} • Matière: ${fabric} • ${formatPrice(item.price * item.quantity)}`;
       }).join("\n");
       const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const total = subtotal + selectedDeliveryFee;
@@ -2351,7 +2581,7 @@
 
         const designUrl = new URL(uploadResult.url, window.location.origin).href;
         const designPositionLabel = designPlacement === "avant" ? "Avant" : "Dos";
-        const designDetails = `Emplacement du design : ${designPositionLabel}\nPhoto du design : ${designUrl}`;
+        const designDetails = `Emplacement du design : ${designPositionLabel}\nTaille du motif : ${designScale} %\nPosition du motif : ${Math.round(designX)} % horizontalement, ${Math.round(designY)} % verticalement\nPhoto du design : ${designUrl}`;
         templateParams.order = `${templateParams.order}\n\n${designDetails}`;
         templateParams.message = templateParams.order;
         templateParams.order_details = `${templateParams.order_details}\n${designDetails}`;
