@@ -1062,9 +1062,22 @@
       justify-content: center;
       gap: 10px;
       width: 100%;
+      touch-action: none;
     }
 
     .design-preview-frames.dual .design-preview-frame { width: min(170px, calc(50% - 5px)); }
+
+    .design-preview-frame.adjusting { outline: 2px solid var(--gold-dark); outline-offset: -2px; }
+
+    .design-face-adjustment {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .design-face-adjustment[hidden] { display: none; }
 
     .design-preview-note {
       margin: 0;
@@ -1097,28 +1110,64 @@
       font-weight: 700;
     }
 
-    .design-preview-product,
-    .design-preview-artwork {
+    .design-preview-product {
       position: absolute;
       width: 100%;
       height: 100%;
       object-fit: contain;
     }
 
-    .design-preview-artwork {
+    .design-artwork-window {
+      position: absolute;
       left: 50%;
       top: 38%;
       width: 25%;
-      height: auto;
-      max-width: 80%;
-      max-height: 80%;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border-radius: 2px;
       transform: translate(-50%, -50%);
       cursor: move;
       touch-action: none;
       user-select: none;
     }
 
-    .design-preview-artwork[data-placement="dos"] { top: 34%; }
+    .design-artwork-window[data-placement="dos"] { top: 34%; }
+
+    .design-preview-artwork {
+      position: absolute;
+      max-width: none;
+      max-height: none;
+      object-fit: fill;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .design-adjust-modes {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+      padding: 3px;
+      gap: 3px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdfb;
+    }
+
+    .design-adjust-mode {
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .design-adjust-mode.selected {
+      background: #f0dfb7;
+      color: var(--primary);
+      font-weight: 700;
+    }
 
     .design-scale-control {
       display: grid;
@@ -1127,6 +1176,8 @@
       gap: 8px 12px;
       width: min(320px, 100%);
     }
+
+    .design-scale-control[hidden] { display: none; }
 
     .design-scale-control label { font-weight: 700; }
 
@@ -1139,6 +1190,8 @@
       gap: 8px 12px;
       width: min(320px, 100%);
     }
+
+    .design-zoom-control[hidden] { display: none; }
 
     .design-zoom-control label { font-weight: 700; }
 
@@ -1184,15 +1237,29 @@
       object-fit: cover;
     }
 
-    .design-photo-choice span {
+    .design-photo-choice .design-photo-index,
+    .design-photo-choice .design-photo-placement {
       position: absolute;
-      right: 3px;
-      bottom: 3px;
       padding: 2px 5px;
       border-radius: 4px;
       background: rgba(17,17,17,0.8);
       color: #fff;
+    }
+
+    .design-photo-choice .design-photo-index {
+      top: 3px;
+      right: 3px;
       font-size: 0.7rem;
+    }
+
+    .design-photo-choice .design-photo-placement {
+      right: 2px;
+      bottom: 3px;
+      left: 2px;
+      overflow: hidden;
+      font-size: 0.58rem;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .checkout-total {
@@ -1453,27 +1520,48 @@
           <div class="design-preview-frames" id="designPreviewFrames">
           <div class="design-preview-frame" id="designPreviewFrontFrame">
             <img class="design-preview-product" id="designPreviewProduct" alt="Produit choisi" />
-            <img class="design-preview-artwork" id="designPreviewArtwork" alt="Votre design" />
+            <div class="design-artwork-window" id="designPreviewArtworkWindow">
+              <img class="design-preview-artwork" id="designPreviewArtwork" alt="Votre design" />
+            </div>
             <span class="design-preview-side-label" id="designPreviewFrontLabel">Avant</span>
           </div>
           <div class="design-preview-frame" id="designPreviewBackFrame" hidden>
             <img class="design-preview-product" id="designPreviewBackProduct" alt="Dos du produit" />
-            <img class="design-preview-artwork" id="designPreviewBackArtwork" alt="Votre design au dos" />
+            <div class="design-artwork-window" id="designPreviewBackArtworkWindow">
+              <img class="design-preview-artwork" id="designPreviewBackArtwork" alt="Votre design au dos" />
+            </div>
             <span class="design-preview-side-label" id="designPreviewBackLabel">Dos</span>
           </div>
           </div>
           <span class="design-preview-position" id="designPreviewPosition"></span>
+          <div class="design-face-adjustment" id="designFaceAdjustment" hidden>
+            <span>Régler la face :</span>
+            <button class="design-adjust-mode selected" type="button" data-design-face="avant" aria-pressed="true">Avant</button>
+            <button class="design-adjust-mode" type="button" data-design-face="dos" aria-pressed="false">Dos</button>
+          </div>
+          <div class="design-adjust-modes" role="group" aria-label="Mode de réglage du design">
+            <button class="design-adjust-mode selected" type="button" data-design-mode="placement" aria-pressed="true">Positionner</button>
+            <button class="design-adjust-mode" type="button" data-design-mode="size" aria-pressed="false">Taille du motif</button>
+            <button class="design-adjust-mode" type="button" data-design-mode="crop" aria-pressed="false">Recadrer</button>
+            <button class="design-adjust-mode" type="button" data-design-mode="product" aria-pressed="false">Zoom produit</button>
+          </div>
           <div class="design-scale-control">
             <label for="designScaleInput">Taille du design</label>
             <output id="designScaleValue" for="designScaleInput">25%</output>
             <input id="designScaleInput" type="range" min="5" max="80" value="25" aria-label="Taille du design" />
+          </div>
+          <div class="design-scale-control" id="designCropControl" hidden>
+            <label for="designCropZoomInput">Zoom du recadrage</label>
+            <output id="designCropZoomValue" for="designCropZoomInput">1×</output>
+            <input id="designCropZoomInput" type="range" min="1" max="3" step="0.1" value="1" aria-label="Zoom du recadrage" />
+            <button class="mini-btn secondary" id="resetDesignCropButton" type="button">Réinitialiser le recadrage</button>
           </div>
           <div class="design-zoom-control">
             <label for="designProductZoomInput">Zoom du produit</label>
             <output id="designProductZoomValue" for="designProductZoomInput">1×</output>
             <input id="designProductZoomInput" type="range" min="1" max="2.5" step="0.1" value="1" aria-label="Zoom du produit" />
           </div>
-          <p class="design-preview-note">Déplacez le motif sur l’aperçu pour choisir sa position.</p>
+          <p class="design-preview-note" id="designPreviewNote">Déplacez le motif sur l’aperçu pour choisir sa position.</p>
         </div>
       </div>
       <p class="admin-error" id="customizationError" role="alert"></p>
@@ -1942,18 +2030,26 @@
     const customizationError = document.getElementById("customizationError");
     const designPreviewSection = document.getElementById("designPreviewSection");
     const designPreviewFrames = document.getElementById("designPreviewFrames");
+    const designPreviewFrontFrame = document.getElementById("designPreviewFrontFrame");
     const designPreviewBackFrame = document.getElementById("designPreviewBackFrame");
     const designPreviewFrontLabel = document.getElementById("designPreviewFrontLabel");
     const designPreviewBackLabel = document.getElementById("designPreviewBackLabel");
+    const designPreviewArtworkWindow = document.getElementById("designPreviewArtworkWindow");
+    const designPreviewBackArtworkWindow = document.getElementById("designPreviewBackArtworkWindow");
     const designPreviewProduct = document.getElementById("designPreviewProduct");
     const designPreviewBackProduct = document.getElementById("designPreviewBackProduct");
     const designPreviewArtwork = document.getElementById("designPreviewArtwork");
     const designPreviewBackArtwork = document.getElementById("designPreviewBackArtwork");
     const designPreviewPosition = document.getElementById("designPreviewPosition");
+    const designFaceAdjustment = document.getElementById("designFaceAdjustment");
     const designScaleInput = document.getElementById("designScaleInput");
     const designScaleValue = document.getElementById("designScaleValue");
     const designProductZoomInput = document.getElementById("designProductZoomInput");
     const designProductZoomValue = document.getElementById("designProductZoomValue");
+    const designCropControl = document.getElementById("designCropControl");
+    const designCropZoomInput = document.getElementById("designCropZoomInput");
+    const designCropZoomValue = document.getElementById("designCropZoomValue");
+    const designPreviewNote = document.getElementById("designPreviewNote");
     const orderEmail = "mermourimahmoud833@gmail.com";
 
     let selectedProductId = null;
@@ -1966,7 +2062,12 @@
     let designObjectUrls = [];
     let designSettings = [];
     let selectedDesignIndex = 0;
+    let designActiveSide = "avant";
     let designDragPointerId = null;
+    let designDragPosition = null;
+    const designActivePointers = new Map();
+    let designPinchStart = null;
+    let designAdjustMode = "placement";
     let designPosition = { x: 50, y: 38, size: 25 };
     let designProductZoom = 1;
     let designSelectionId = 0;
@@ -1983,6 +2084,45 @@
       return product?.productType === "mug" || product?.category === "mug";
     }
 
+    function cloneDesignSideSettings(settings, side) {
+      return {
+        x: Number(settings.x ?? 50),
+        y: Number(settings.y ?? (side === "dos" ? 34 : 38)),
+        size: Number(settings.size ?? 25),
+        cropZoom: Number(settings.cropZoom ?? 1),
+        cropX: Number(settings.cropX ?? 0),
+        cropY: Number(settings.cropY ?? 0)
+      };
+    }
+
+    function ensureDesignSideSettings(settings) {
+      if (!settings.sides) {
+        settings.sides = {
+          avant: cloneDesignSideSettings(settings, "avant"),
+          dos: cloneDesignSideSettings(settings, "dos")
+        };
+      }
+      return settings.sides;
+    }
+
+    function getActiveDesignSettings(settings = designSettings[selectedDesignIndex]) {
+      if (!settings) return null;
+      return settings.placement === "deux_cotes"
+        ? ensureDesignSideSettings(settings)[designActiveSide]
+        : settings;
+    }
+
+    function setActiveDesignSide(side) {
+      designActiveSide = side === "dos" ? "dos" : "avant";
+      designPreviewFrontFrame.classList.toggle("adjusting", designActiveSide === "avant");
+      designPreviewBackFrame.classList.toggle("adjusting", designActiveSide === "dos");
+      designFaceAdjustment.querySelectorAll("[data-design-face]").forEach(button => {
+        const selected = button.dataset.designFace === designActiveSide;
+        button.classList.toggle("selected", selected);
+        button.setAttribute("aria-pressed", String(selected));
+      });
+    }
+
     function readFileAsDataUrl(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -1990,6 +2130,25 @@
         reader.onerror = () => reject(new Error("Impossible de lire l'image."));
         reader.readAsDataURL(file);
       });
+    }
+
+    async function createCroppedDesignDataUrl(design) {
+      const zoom = Math.max(1, Number(design.cropZoom || 1));
+      const cropX = Math.max(-1, Math.min(1, Number(design.cropX || 0)));
+      const cropY = Math.max(-1, Math.min(1, Number(design.cropY || 0)));
+      const originalDataUrl = await readFileAsDataUrl(design.file);
+      if (zoom === 1 && cropX === 0 && cropY === 0) return originalDataUrl;
+
+      const image = await loadImage(originalDataUrl);
+      const cropWidth = image.naturalWidth / zoom;
+      const cropHeight = image.naturalHeight / zoom;
+      const sourceX = (image.naturalWidth - cropWidth) * (cropX + 1) / 2;
+      const sourceY = (image.naturalHeight - cropHeight) * (cropY + 1) / 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(cropWidth));
+      canvas.height = Math.max(1, Math.round(cropHeight));
+      canvas.getContext("2d").drawImage(image, sourceX, sourceY, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/png");
     }
 
     function loadImage(src) {
@@ -2031,8 +2190,11 @@
       );
 
       for (const design of (item.designFiles || []).filter(design => design.placement === placement || design.placement === "deux_cotes")) {
-        const designImage = await loadImage(await readFileAsDataUrl(design.file));
-        let artworkWidth = canvas.width * Number(design.size) / 100;
+        const sideSettings = design.placement === "deux_cotes"
+          ? design.sides?.[placement] || design
+          : design;
+        const designImage = await loadImage(await createCroppedDesignDataUrl({ ...design, ...sideSettings }));
+        let artworkWidth = canvas.width * Number(sideSettings.size) / 100;
         let artworkHeight = artworkWidth * designImage.naturalHeight / designImage.naturalWidth;
         const maxArtworkHeight = canvas.height * 0.8;
         if (artworkHeight > maxArtworkHeight) {
@@ -2040,15 +2202,9 @@
           artworkWidth *= scale;
           artworkHeight = maxArtworkHeight;
         }
-        const centerX = canvas.width * Number(design.x) / 100;
-        const centerY = canvas.height * Number(design.y) / 100;
-        context.drawImage(
-          designImage,
-          centerX - artworkWidth / 2,
-          centerY - artworkHeight / 2,
-          artworkWidth,
-          artworkHeight
-        );
+        const centerX = canvas.width * Number(sideSettings.x) / 100;
+        const centerY = canvas.height * Number(sideSettings.y) / 100;
+        context.drawImage(designImage, centerX - artworkWidth / 2, centerY - artworkHeight / 2, artworkWidth, artworkHeight);
       }
       return canvas.toDataURL("image/jpeg", 0.82);
     }
@@ -2067,8 +2223,15 @@
       const frontImage = designProduct.frontImage || productImages[0] || selectedProductImage || designProduct.image;
       const backImage = designProduct.backImage || productImages[1] || frontImage;
       const isBothSides = placement === "deux_cotes";
+      if (placement === "avant") designActiveSide = "avant";
+      else if (placement === "dos") designActiveSide = "dos";
+      else ensureDesignSideSettings(settings);
+      const frontSettings = isBothSides ? settings.sides.avant : placement === "avant" ? settings : null;
+      const backSettings = isBothSides ? settings.sides.dos : placement === "dos" ? settings : null;
+      const activeSettings = getActiveDesignSettings(settings);
       designPreviewFrames.classList.toggle("dual", isBothSides);
       designPreviewBackFrame.hidden = !isBothSides;
+      designFaceAdjustment.hidden = !isBothSides;
       designPreviewFrontLabel.textContent = placement === "dos" ? "Dos" : "Avant";
       designPreviewBackLabel.textContent = "Dos";
       designPreviewProduct.src = placement === "dos" ? backImage : frontImage;
@@ -2076,29 +2239,70 @@
       designPreviewProduct.style.transform = `scale(${designProductZoom})`;
       designPreviewBackProduct.src = backImage;
       designPreviewBackProduct.style.transform = `scale(${designProductZoom})`;
-      designPosition = { x: settings.x, y: settings.y, size: settings.size };
+      designPosition = { x: activeSettings.x, y: activeSettings.y, size: activeSettings.size };
       designPreviewArtwork.src = designObjectUrls[selectedDesignIndex];
-      designPreviewArtwork.dataset.placement = placement === "dos" ? "dos" : "avant";
+      designPreviewArtworkWindow.dataset.placement = placement === "dos" ? "dos" : "avant";
       designPreviewBackArtwork.src = designObjectUrls[selectedDesignIndex];
-      designPreviewBackArtwork.dataset.placement = "dos";
-      designPreviewPosition.textContent = `${selectedDesignIndex + 1}/${designFiles.length} • ${isBothSides ? "Avant et dos" : placement === "avant" ? "Avant" : "Dos"}`;
-      designScaleInput.value = String(settings.size);
+      designPreviewBackArtworkWindow.dataset.placement = "dos";
+      designPreviewArtwork.onload = () => updateDesignCropTransform(designPreviewArtwork, designPreviewArtworkWindow, frontSettings || activeSettings);
+      designPreviewBackArtwork.onload = () => updateDesignCropTransform(designPreviewBackArtwork, designPreviewBackArtworkWindow, backSettings || activeSettings);
+      designPreviewPosition.textContent = `${selectedDesignIndex + 1}/${designFiles.length} • ${isBothSides ? `Ajustement : ${designActiveSide === "avant" ? "Avant" : "Dos"}` : placement === "avant" ? "Avant" : "Dos"}`;
+      designScaleInput.value = String(activeSettings.size);
+      designCropZoomInput.value = String(activeSettings.cropZoom || 1);
+      designCropZoomValue.value = `${Number(activeSettings.cropZoom || 1).toFixed(1)}×`;
+      designCropZoomValue.textContent = `${Number(activeSettings.cropZoom || 1).toFixed(1)}×`;
       designProductZoomInput.value = String(designProductZoom);
       document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
         input.checked = input.value === placement;
       });
       updateDesignArtworkTransform();
+      setActiveDesignSide(designActiveSide);
       designPreviewSection.hidden = false;
     }
 
+    document.querySelectorAll("[data-design-face]").forEach(button => {
+      button.addEventListener("click", () => {
+        if (designSettings[selectedDesignIndex]?.placement !== "deux_cotes") return;
+        setActiveDesignSide(button.dataset.designFace);
+        updateDesignPreview();
+      });
+    });
+
     function renderDesignPhotoChoices() {
       designPhotoChoices.innerHTML = designFiles.map((file, index) => `
-        <button class="design-photo-choice ${index === selectedDesignIndex ? "selected" : ""}" type="button" data-design-index="${index}" aria-label="Modifier le motif ${index + 1}" aria-pressed="${index === selectedDesignIndex}">
+        <button class="design-photo-choice ${index === selectedDesignIndex ? "selected" : ""}" type="button" data-design-index="${index}" aria-label="Modifier le motif ${index + 1}, ${designPlacementLabel(designSettings[index]?.placement)}" aria-pressed="${index === selectedDesignIndex}">
           <img src="${designObjectUrls[index]}" alt="" />
-          <span>${index + 1}</span>
+          <span class="design-photo-index">${index + 1}</span>
+          <span class="design-photo-placement">${designPlacementLabel(designSettings[index]?.placement)}</span>
         </button>
       `).join("");
       designPhotoChoices.hidden = designFiles.length < 2;
+    }
+
+    function designPlacementLabel(placement) {
+      if (placement === "deux_cotes") return "Avant + dos";
+      if (placement === "avant") return "Avant";
+      if (placement === "dos") return "Dos";
+      return "À placer";
+    }
+
+    function setDesignAdjustMode(mode) {
+      designAdjustMode = mode;
+      designScaleInput.closest(".design-scale-control").hidden = mode !== "size";
+      designCropControl.hidden = mode !== "crop";
+      designProductZoomInput.closest(".design-zoom-control").hidden = mode !== "product";
+      const modeNotes = {
+        placement: "Glissez le motif pour le positionner sur le produit.",
+        size: "Pincez le motif à deux doigts pour l’agrandir ou le réduire.",
+        crop: "Pincez à deux doigts pour zoomer, puis glissez la photo dans son cadre.",
+        product: "Pincez le produit à deux doigts pour régler son zoom."
+      };
+      designPreviewNote.textContent = modeNotes[mode];
+      document.querySelectorAll("[data-design-mode]").forEach(button => {
+        const selected = button.dataset.designMode === mode;
+        button.classList.toggle("selected", selected);
+        button.setAttribute("aria-pressed", String(selected));
+      });
     }
 
     function resetDesignEditor() {
@@ -2115,7 +2319,19 @@
       designPhotoChoices.innerHTML = "";
       designPhotoChoices.hidden = true;
       designPosition = { x: 50, y: 38, size: 25 };
+      designActivePointers.clear();
+      designPinchStart = null;
+      designDragPointerId = null;
+      designDragPosition = null;
       designProductZoom = 1;
+      designActiveSide = "avant";
+      setDesignAdjustMode("placement");
+      designCropZoomInput.value = "1";
+      designCropZoomValue.value = "1×";
+      designCropZoomValue.textContent = "1×";
+      designCropControl.hidden = true;
+      designFaceAdjustment.hidden = true;
+      setActiveDesignSide("avant");
       designPreviewBackFrame.hidden = true;
       designPreviewFrames.classList.remove("dual");
       designScaleInput.value = "25";
@@ -2128,19 +2344,41 @@
     }
 
     function updateDesignArtworkTransform() {
-      const halfSize = designPosition.size / 2;
-      designPosition.x = Math.max(halfSize, Math.min(100 - halfSize, designPosition.x));
-      designPosition.y = Math.max(halfSize, Math.min(100 - halfSize, designPosition.y));
-      if (designSettings[selectedDesignIndex]) {
-        Object.assign(designSettings[selectedDesignIndex], designPosition);
-      }
-      [designPreviewArtwork, designPreviewBackArtwork].forEach(artwork => {
-        artwork.style.left = `${designPosition.x}%`;
-        artwork.style.top = `${designPosition.y}%`;
-        artwork.style.width = `${designPosition.size}%`;
+      const settings = designSettings[selectedDesignIndex];
+      const isBothSides = settings?.placement === "deux_cotes";
+      const activeSettings = getActiveDesignSettings(settings);
+      if (!activeSettings) return;
+      Object.assign(activeSettings, designPosition);
+      const faces = [
+        ["avant", designPreviewArtwork, designPreviewArtworkWindow],
+        ["dos", designPreviewBackArtwork, designPreviewBackArtworkWindow]
+      ];
+      faces.forEach(([side, artwork, cropWindow]) => {
+        const sideSettings = isBothSides ? ensureDesignSideSettings(settings)[side] : getActiveDesignSettings(settings);
+        if (!sideSettings) return;
+        const halfSize = sideSettings.size / 2;
+        sideSettings.x = Math.max(halfSize, Math.min(100 - halfSize, sideSettings.x));
+        sideSettings.y = Math.max(halfSize, Math.min(100 - halfSize, sideSettings.y));
+        cropWindow.style.left = `${sideSettings.x}%`;
+        cropWindow.style.top = `${sideSettings.y}%`;
+        cropWindow.style.width = `${sideSettings.size}%`;
+        if (artwork.naturalWidth) updateDesignCropTransform(artwork, cropWindow, sideSettings);
       });
-      designScaleValue.value = `${designPosition.size}%`;
-      designScaleValue.textContent = `${designPosition.size}%`;
+      designPosition = { x: activeSettings.x, y: activeSettings.y, size: activeSettings.size };
+      designScaleValue.value = `${activeSettings.size}%`;
+      designScaleValue.textContent = `${activeSettings.size}%`;
+    }
+
+    function updateDesignCropTransform(artwork, window, settings) {
+      if (!artwork.naturalWidth || !settings) return;
+      const zoom = Math.max(1, Number(settings.cropZoom || 1));
+      const cropX = Math.max(-1, Math.min(1, Number(settings.cropX || 0)));
+      const cropY = Math.max(-1, Math.min(1, Number(settings.cropY || 0)));
+      window.style.aspectRatio = `${artwork.naturalWidth} / ${artwork.naturalHeight}`;
+      artwork.style.width = `${zoom * 100}%`;
+      artwork.style.height = `${zoom * 100}%`;
+      artwork.style.left = `${(1 - zoom) * 50 + cropX * (zoom - 1) * 50}%`;
+      artwork.style.top = `${(1 - zoom) * 50 + cropY * (zoom - 1) * 50}%`;
     }
 
     function applyAppearance() {
@@ -2534,10 +2772,12 @@
         selectedDesignIndex = Number(designPhotoChoice.dataset.designIndex);
         renderDesignPhotoChoices();
         const settings = designSettings[selectedDesignIndex];
-        designPosition = { x: settings.x, y: settings.y, size: settings.size };
-        designScaleInput.value = String(settings.size);
-        designScaleValue.value = `${settings.size}%`;
-        designScaleValue.textContent = `${settings.size}%`;
+        designActiveSide = settings.placement === "dos" ? "dos" : "avant";
+        const activeSettings = getActiveDesignSettings(settings);
+        designPosition = { x: activeSettings.x, y: activeSettings.y, size: activeSettings.size };
+        designScaleInput.value = String(activeSettings.size);
+        designScaleValue.value = `${activeSettings.size}%`;
+        designScaleValue.textContent = `${activeSettings.size}%`;
         document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
           input.checked = input.value === settings.placement;
         });
@@ -2794,13 +3034,24 @@
         fabric: isMug ? null : fabricSelect.value,
         color: isMug ? null : selectedCustomColor,
         note: isMug ? "" : noteInput.value.trim(),
-        designs: isMug ? [] : selectedDesignFiles.map((file, index) => ({
-          id: ++designSelectionId,
-          placement: designSettings[index].placement,
-          x: designSettings[index].x,
-          y: designSettings[index].y,
-          size: designSettings[index].size
-        })),
+        designs: isMug ? [] : selectedDesignFiles.map((file, index) => {
+          const settings = designSettings[index];
+          const activeSettings = getActiveDesignSettings(settings);
+          return {
+            id: ++designSelectionId,
+            placement: settings.placement,
+            x: activeSettings.x,
+            y: activeSettings.y,
+            size: activeSettings.size,
+            cropZoom: activeSettings.cropZoom,
+            cropX: activeSettings.cropX,
+            cropY: activeSettings.cropY,
+            sides: settings.placement === "deux_cotes" ? {
+              avant: { ...ensureDesignSideSettings(settings).avant },
+              dos: { ...ensureDesignSideSettings(settings).dos }
+            } : null
+          };
+        }),
         designProductZoom: !isMug && selectedDesignFiles.length ? designProductZoom : null
       };
 
@@ -3004,27 +3255,150 @@
       designPreviewBackProduct.style.transform = `scale(${designProductZoom})`;
     });
 
-    [designPreviewArtwork, designPreviewBackArtwork].forEach(artwork => {
-      artwork.addEventListener("pointerdown", event => {
-        if (designPreviewSection.hidden) return;
-        event.preventDefault();
-        designDragPointerId = event.pointerId;
-        artwork.setPointerCapture(event.pointerId);
+    document.querySelectorAll("[data-design-mode]").forEach(button => {
+      button.addEventListener("click", () => {
+        setDesignAdjustMode(button.dataset.designMode);
       });
+    });
 
-      artwork.addEventListener("pointermove", event => {
-        if (event.pointerId !== designDragPointerId) return;
-        const frame = artwork.closest(".design-preview-frame").getBoundingClientRect();
+    designCropZoomInput.addEventListener("input", () => {
+      const settings = designSettings[selectedDesignIndex];
+      if (!settings) return;
+      const activeSettings = getActiveDesignSettings(settings);
+      activeSettings.cropZoom = Number(designCropZoomInput.value);
+      designCropZoomValue.value = `${activeSettings.cropZoom.toFixed(1)}×`;
+      designCropZoomValue.textContent = `${activeSettings.cropZoom.toFixed(1)}×`;
+      updateDesignPreview();
+    });
+
+    document.getElementById("resetDesignCropButton").addEventListener("click", () => {
+      const settings = designSettings[selectedDesignIndex];
+      if (!settings) return;
+      const activeSettings = getActiveDesignSettings(settings);
+      activeSettings.cropZoom = 1;
+      activeSettings.cropX = 0;
+      activeSettings.cropY = 0;
+      designCropZoomInput.value = "1";
+      designCropZoomValue.value = "1×";
+      designCropZoomValue.textContent = "1×";
+      updateDesignPreview();
+    });
+
+    function getDesignPointerDistance(first, second) {
+      return Math.hypot(first.x - second.x, first.y - second.y);
+    }
+
+    function setDesignCropZoom(value, settings) {
+      const activeSettings = settings.placement === "deux_cotes" ? ensureDesignSideSettings(settings)[designActiveSide] : settings;
+      activeSettings.cropZoom = Math.max(1, Math.min(3, value));
+      designCropZoomInput.value = String(activeSettings.cropZoom);
+      designCropZoomValue.value = `${activeSettings.cropZoom.toFixed(1)}×`;
+      designCropZoomValue.textContent = `${activeSettings.cropZoom.toFixed(1)}×`;
+      updateDesignArtworkTransform();
+    }
+
+    function setDesignProductZoom(value) {
+      designProductZoom = Math.max(1, Math.min(2.5, value));
+      designProductZoomInput.value = String(designProductZoom);
+      designProductZoomValue.value = `${designProductZoom.toFixed(1)}×`;
+      designProductZoomValue.textContent = `${designProductZoom.toFixed(1)}×`;
+      designPreviewProduct.style.transform = `scale(${designProductZoom})`;
+      designPreviewBackProduct.style.transform = `scale(${designProductZoom})`;
+    }
+
+    designPreviewFrames.addEventListener("pointerdown", event => {
+      if (designPreviewSection.hidden) return;
+      const frame = event.target.closest(".design-preview-frame");
+      if (!frame) return;
+      if (designSettings[selectedDesignIndex]?.placement === "deux_cotes") {
+        setActiveDesignSide(frame === designPreviewBackFrame ? "dos" : "avant");
+        updateDesignPreview();
+      }
+      const artworkWindow = event.target.closest(".design-artwork-window");
+      const modeNeedsArtwork = designAdjustMode === "placement";
+      if (modeNeedsArtwork && !artworkWindow) return;
+      event.preventDefault();
+      try {
+        designPreviewFrames.setPointerCapture(event.pointerId);
+      } catch (error) {
+        if (event.isTrusted) throw error;
+      }
+      designActivePointers.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
+        frame,
+        onArtwork: Boolean(artworkWindow)
+      });
+      designDragPointerId = event.pointerId;
+      designDragPosition = { x: event.clientX, y: event.clientY };
+
+      if (designActivePointers.size === 2) {
+        const [first, second] = [...designActivePointers.values()];
+        if (first.frame !== second.frame) return;
+        const settings = designSettings[selectedDesignIndex];
+        designPinchStart = {
+          distance: Math.max(1, getDesignPointerDistance(first, second)),
+          mode: designAdjustMode,
+          size: getActiveDesignSettings(settings)?.size || designPosition.size,
+          cropZoom: getActiveDesignSettings(settings)?.cropZoom || 1,
+          productZoom: designProductZoom
+        };
+      }
+    });
+
+    designPreviewFrames.addEventListener("pointermove", event => {
+      const pointer = designActivePointers.get(event.pointerId);
+      if (!pointer) return;
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      const settings = designSettings[selectedDesignIndex];
+      const activeSettings = getActiveDesignSettings(settings);
+
+      if (designActivePointers.size >= 2 && designPinchStart) {
+        const [first, second] = [...designActivePointers.values()];
+        const ratio = getDesignPointerDistance(first, second) / designPinchStart.distance;
+        if (designPinchStart.mode === "size" && activeSettings) {
+          designPosition.size = Math.max(5, Math.min(80, designPinchStart.size * ratio));
+          designScaleInput.value = String(designPosition.size);
+          updateDesignArtworkTransform();
+        } else if (designPinchStart.mode === "crop" && activeSettings) {
+          setDesignCropZoom(designPinchStart.cropZoom * ratio, settings);
+        } else if (designPinchStart.mode === "product") {
+          setDesignProductZoom(designPinchStart.productZoom * ratio);
+        }
+        return;
+      }
+
+      if (event.pointerId !== designDragPointerId || (designAdjustMode === "placement" && !pointer.onArtwork) || !designDragPosition) return;
+      const frame = pointer.frame.getBoundingClientRect();
+      const deltaX = event.clientX - designDragPosition.x;
+      const deltaY = event.clientY - designDragPosition.y;
+      designDragPosition = { x: event.clientX, y: event.clientY };
+      if (designAdjustMode === "crop" && activeSettings) {
+        const cropZoom = Number(activeSettings.cropZoom || 1);
+        if (cropZoom <= 1) return;
+        activeSettings.cropX = Math.max(-1, Math.min(1, Number(activeSettings.cropX || 0) + (deltaX / frame.width) * 2 / (cropZoom - 1)));
+        activeSettings.cropY = Math.max(-1, Math.min(1, Number(activeSettings.cropY || 0) + (deltaY / frame.height) * 2 / (cropZoom - 1)));
+        updateDesignArtworkTransform();
+      } else if (designAdjustMode === "placement") {
         designPosition.x = ((event.clientX - frame.left) / frame.width) * 100;
         designPosition.y = ((event.clientY - frame.top) / frame.height) * 100;
         updateDesignArtworkTransform();
-      });
+      }
+    });
 
-      artwork.addEventListener("pointerup", () => {
-        designDragPointerId = null;
-      });
-      artwork.addEventListener("pointercancel", () => {
-        designDragPointerId = null;
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(eventName => {
+      designPreviewFrames.addEventListener(eventName, event => {
+        designActivePointers.delete(event.pointerId);
+        designPinchStart = null;
+        if (designActivePointers.size) {
+          const [pointerId, pointer] = [...designActivePointers.entries()][0];
+          designDragPointerId = pointerId;
+          designDragPosition = { x: pointer.x, y: pointer.y };
+        } else {
+          designDragPointerId = null;
+          designDragPosition = null;
+        }
       });
     });
 
@@ -3044,7 +3418,7 @@
       designObjectUrls.forEach(objectUrl => URL.revokeObjectURL(objectUrl));
       designFiles = files;
       designObjectUrls = files.map(file => URL.createObjectURL(file));
-      designSettings = files.map(() => ({ placement: null, x: 50, y: 38, size: 25 }));
+      designSettings = files.map(() => ({ placement: null, x: 50, y: 38, size: 25, cropZoom: 1, cropX: 0, cropY: 0 }));
       selectedDesignIndex = 0;
       designPosition = { x: 50, y: 38, size: 25 };
       renderDesignPhotoChoices();
@@ -3055,10 +3429,21 @@
       input.addEventListener("change", () => {
         const settings = designSettings[selectedDesignIndex];
         if (!settings) return;
+        if (input.value === "deux_cotes") {
+          ensureDesignSideSettings(settings);
+          designActiveSide = "avant";
+        } else if (settings.placement === "deux_cotes") {
+          Object.assign(settings, ensureDesignSideSettings(settings)[input.value]);
+          designActiveSide = input.value;
+        } else {
+          designActiveSide = input.value;
+        }
         settings.placement = input.value;
         if (input.value === "dos" && settings.y === 38) settings.y = 34;
         if (input.value === "avant" && settings.y === 34) settings.y = 38;
-        designPosition = { x: settings.x, y: settings.y, size: settings.size };
+        const activeSettings = getActiveDesignSettings(settings);
+        designPosition = { x: activeSettings.x, y: activeSettings.y, size: activeSettings.size };
+        renderDesignPhotoChoices();
         updateDesignPreview();
       });
     });
@@ -3200,21 +3585,25 @@
           const uploadedDesigns = [];
           for (let index = 0; index < item.designFiles.length; index += 1) {
             const design = item.designFiles[index];
-            const imageData = await readFileAsDataUrl(design.file);
-            const uploadResponse = await fetch('/api/designs', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ imageData })
-            });
-            const uploadResult = await uploadResponse.json();
-            if (!uploadResponse.ok) throw new Error(uploadResult.error || `La photo ${index + 1} n’a pas pu être enregistrée.`);
+            const designSides = design.placement === "deux_cotes" ? ["avant", "dos"] : [design.placement];
+            for (const side of designSides) {
+              const sideSettings = design.placement === "deux_cotes" ? design.sides?.[side] || design : design;
+              const imageData = await createCroppedDesignDataUrl({ ...design, ...sideSettings });
+              const uploadResponse = await fetch('/api/designs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageData })
+              });
+              const uploadResult = await uploadResponse.json();
+              if (!uploadResponse.ok) throw new Error(uploadResult.error || `La photo ${index + 1} n’a pas pu être enregistrée.`);
 
-            uploadedDesigns.push({
-              placement: design.placement === "deux_cotes" ? "Avant et dos" : design.placement === "avant" ? "Avant" : "Dos",
-              coordinates: `X ${Math.round(design.x)}%, Y ${Math.round(design.y)}%`,
-              size: `${Math.round(design.size)}%`,
-              url: new URL(uploadResult.url, window.location.origin).href
-            });
+              uploadedDesigns.push({
+                placement: side === "avant" ? "Avant" : "Dos",
+                coordinates: `X ${Math.round(sideSettings.x)}%, Y ${Math.round(sideSettings.y)}%`,
+                size: `${Math.round(sideSettings.size)}%`,
+                url: new URL(uploadResult.url, window.location.origin).href
+              });
+            }
           }
           designDetails.push({
             name: item.name,
