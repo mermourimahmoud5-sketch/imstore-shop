@@ -175,6 +175,14 @@
 
     .admin-row input { min-width: 0; padding: 10px; }
     .admin-row button { padding: 10px; }
+    .discount-row {
+      display: grid;
+      grid-template-columns: 90px minmax(0, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .discount-row input { min-width: 0; padding: 10px; }
+    .discount-row button { padding: 10px; }
 
     .link {
       display: inline-block;
@@ -357,11 +365,15 @@
       productList.innerHTML = products.map(product => `
         <div class="product-item">
           <strong>${product.name}</strong>
-          <small>${product.productType === 'vierge' ? 'VIERGE' : 'PRÊT-À-PORTER'} • ${product.isPromotion ? 'PROMO' : product.tag} • ${product.category} • ${Number(product.price).toLocaleString('fr-DZ')} DZD • Stock : ${Number(product.stockQuantity || 0)}</small>
+          <small>${product.productType === 'vierge' ? 'VIERGE' : 'PRÊT-À-PORTER'} • ${product.isPromotion ? 'PROMO' : product.tag} • ${product.category} • ${Number(product.price).toLocaleString('fr-DZ')} DZD • Stock : ${Number(product.stockQuantity || 0)} • Réduction : ${Number(product.discountPercent || 0)}%</small>
           <div class="admin-row">
             <input type="number" min="0" step="1" value="${Number(product.stockQuantity || 0)}" aria-label="Stock de ${product.name}" data-stock-input="${product.id}" />
             <button class="secondary" data-stock="${product.id}" type="button">Enregistrer stock</button>
             <button class="danger" data-delete="${product.id}" type="button">Supprimer</button>
+          </div>
+          <div class="discount-row">
+            <input type="number" min="0" max="100" step="0.01" value="${Number(product.discountPercent || 0)}" aria-label="Réduction de ${product.name} en pourcentage" data-discount-input="${product.id}" />
+            <button class="secondary" data-discount="${product.id}" type="button">Appliquer la réduction (%)</button>
           </div>
         </div>
       `).join('');
@@ -484,6 +496,35 @@
     document.getElementById('publishProductButton').addEventListener('click', publishProduct);
 
     productList.addEventListener('click', async (event) => {
+      const discountButton = event.target.closest('[data-discount]');
+      if (discountButton) {
+        const id = Number(discountButton.dataset.discount);
+        const discountInput = productList.querySelector(`[data-discount-input="${id}"]`);
+        const discountPercent = Number(discountInput.value);
+        if (discountInput.value.trim() === '' || !Number.isFinite(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+          productError.textContent = 'Entrez une réduction comprise entre 0 et 100 %.';
+          productSuccess.textContent = '';
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/products/${id}/discount`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ discountPercent })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Mise à jour impossible.');
+          productError.textContent = '';
+          productSuccess.textContent = discountPercent > 0 ? 'Réduction appliquée.' : 'Réduction supprimée.';
+          await renderProducts();
+        } catch (error) {
+          productError.textContent = error.message || 'Mise à jour impossible.';
+          productSuccess.textContent = '';
+        }
+        return;
+      }
+
       const stockButton = event.target.closest('[data-stock]');
       if (stockButton) {
         const id = Number(stockButton.dataset.stock);

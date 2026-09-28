@@ -19,6 +19,7 @@ function formatProduct(row) {
     name: row.name,
     productType: row.product_type || 'pret_a_porter',
     stockQuantity: Number(row.stock_quantity || 0),
+    discountPercent: Number(row.discount_percent || 0),
     category: row.category,
     price: Number(row.price),
     tag: row.tag,
@@ -104,6 +105,25 @@ app.patch('/api/products/:id/stock', async (req, res) => {
   }
 });
 
+app.patch('/api/products/:id/discount', async (req, res) => {
+  const discountPercent = Number(req.body && req.body.discountPercent);
+  if (!Number.isFinite(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+    return res.status(400).json({ error: 'La réduction doit être comprise entre 0 et 100 %.' });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE products SET discount_percent = $1 WHERE id = $2 RETURNING *',
+      [discountPercent, req.params.id]
+    );
+    if (!result.rowCount) return res.status(404).json({ error: 'Produit introuvable.' });
+    res.json(formatProduct(result.rows[0]));
+  } catch (error) {
+    console.error('Erreur de mise à jour de la réduction :', error);
+    res.status(500).json({ error: 'Impossible de mettre à jour la réduction.' });
+  }
+});
+
 app.delete('/api/products/:id', async (req, res) => {
   try {
     const result = await pool.query('DELETE FROM products WHERE id = $1', [req.params.id]);
@@ -178,6 +198,7 @@ async function startServer() {
       name TEXT NOT NULL,
       product_type TEXT NOT NULL DEFAULT 'pret_a_porter',
       stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
+      discount_percent NUMERIC(5, 2) NOT NULL DEFAULT 0 CHECK (discount_percent >= 0 AND discount_percent <= 100),
       category TEXT NOT NULL,
       price NUMERIC(12, 2) NOT NULL,
       tag TEXT NOT NULL,
@@ -199,6 +220,11 @@ async function startServer() {
   await pool.query(`
     ALTER TABLE products
     ADD COLUMN IF NOT EXISTS stock_quantity INTEGER NOT NULL DEFAULT 0
+  `);
+
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS discount_percent NUMERIC(5, 2) NOT NULL DEFAULT 0
   `);
 
   await pool.query(`

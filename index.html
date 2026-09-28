@@ -881,6 +881,7 @@
     }
 
     .modal-grid { display: grid; gap: 12px; }
+    .modal-grid[hidden] { display: none; }
 
     .field label {
       display: block;
@@ -1114,10 +1115,16 @@
     .admin-stock-actions { display: flex; align-items: center; gap: 8px; }
     .admin-stock-actions input { width: 82px; padding: 8px; }
     .admin-stock-actions .mini-btn { padding: 8px 10px; }
+    .admin-discount-actions { display: flex; align-items: center; gap: 8px; }
+    .admin-discount-actions input { width: 82px; padding: 8px; }
+    .admin-discount-actions .mini-btn { padding: 8px 10px; }
     .mini-btn.danger { background: #f8e6e1; color: #9b3028; }
     .mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .product-stock { margin: 8px 0 0; color: var(--success); font-size: 0.85rem; font-weight: 700; }
     .product-stock.out-of-stock { color: #b33b30; }
+    .price-list { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .price-old { color: var(--muted); font-size: 0.9rem; text-decoration: line-through; }
+    .discount-badge { color: #a63129; font-size: 0.8rem; font-weight: 800; }
 
     @media (max-width: 520px) {
       .admin-form-row { grid-template-columns: 1fr; }
@@ -1284,6 +1291,42 @@
           <textarea id="noteInput" placeholder="Ex. : coupe plus ajustée, poignets légèrement resserrés..."></textarea>
         </div>
       </div>
+
+      <div class="modal-grid" id="customizationDesignFields" hidden>
+        <div class="field">
+          <label for="designImageInput">Photo de votre design (facultatif)</label>
+          <input id="designImageInput" type="file" accept="image/png,image/jpeg,image/webp" />
+          <span class="field-hint">Ajoutez un motif si vous souhaitez personnaliser le produit. PNG, JPG ou WebP, 5 Mo maximum.</span>
+        </div>
+        <div class="field">
+          <label>Emplacement du design (facultatif)</label>
+          <div class="design-placement-options">
+            <label class="design-placement-choice">
+              <input type="radio" name="designPlacement" value="avant" />
+              <span>Avant</span>
+            </label>
+            <label class="design-placement-choice">
+              <input type="radio" name="designPlacement" value="dos" />
+              <span>Dos</span>
+            </label>
+          </div>
+        </div>
+        <div class="design-preview-section" id="designPreviewSection" hidden aria-live="polite">
+          <p class="design-preview-title">Aperçu de votre t-shirt</p>
+          <div class="design-preview-frame">
+            <img class="design-preview-product" id="designPreviewProduct" alt="Produit choisi" />
+            <img class="design-preview-artwork" id="designPreviewArtwork" alt="Votre design" />
+            <span class="design-preview-position" id="designPreviewPosition"></span>
+          </div>
+          <div class="design-scale-control">
+            <label for="designScaleInput">Taille du design</label>
+            <output id="designScaleValue" for="designScaleInput">25%</output>
+            <input id="designScaleInput" type="range" min="5" max="80" value="25" aria-label="Taille du design" />
+          </div>
+          <p class="design-preview-note">Déplacez le motif sur l’aperçu pour choisir sa position.</p>
+        </div>
+      </div>
+      <p class="admin-error" id="customizationError" role="alert"></p>
 
       <button class="modal-confirm" id="confirmCustomization">Ajouter au panier</button>
     </div>
@@ -1499,38 +1542,6 @@
             <option>El M'Ghair</option>
             <option>El Meniaa</option>
           </select>
-        </div>
-        <div class="field" id="designImageField">
-          <label for="designImageInput">Photo de votre design (facultatif)</label>
-          <input id="designImageInput" type="file" accept="image/png,image/jpeg,image/webp" />
-          <span class="field-hint">Ajoutez un motif si vous souhaitez personnaliser le produit. PNG, JPG ou WebP, 5 Mo maximum.</span>
-        </div>
-        <div class="field" id="designPlacementField">
-          <label>Emplacement du design (facultatif)</label>
-          <div class="design-placement-options">
-            <label class="design-placement-choice">
-              <input type="radio" name="designPlacement" value="avant" />
-              <span>Avant</span>
-            </label>
-            <label class="design-placement-choice">
-              <input type="radio" name="designPlacement" value="dos" />
-              <span>Dos</span>
-            </label>
-          </div>
-        </div>
-        <div class="design-preview-section" id="designPreviewSection" hidden aria-live="polite">
-          <p class="design-preview-title">Aperçu de votre t-shirt</p>
-          <div class="design-preview-frame">
-            <img class="design-preview-product" id="designPreviewProduct" alt="Produit choisi" />
-            <img class="design-preview-artwork" id="designPreviewArtwork" alt="Votre design" />
-            <span class="design-preview-position" id="designPreviewPosition"></span>
-          </div>
-          <div class="design-scale-control">
-            <label for="designScaleInput">Taille du design</label>
-            <output id="designScaleValue" for="designScaleInput">25%</output>
-            <input id="designScaleInput" type="range" min="5" max="80" value="25" aria-label="Taille du design" />
-          </div>
-          <p class="design-preview-note">Aperçu indicatif du placement sur la première photo du produit.</p>
         </div>
         <div class="field">
           <label>Mode de livraison *</label>
@@ -1760,8 +1771,8 @@
     const domicileDeliveryLabel = document.getElementById("domicileDeliveryLabel");
     const checkoutTotal = document.getElementById("checkoutTotal");
     const designImageInput = document.getElementById("designImageInput");
-    const designImageField = document.getElementById("designImageField");
-    const designPlacementField = document.getElementById("designPlacementField");
+    const customizationDesignFields = document.getElementById("customizationDesignFields");
+    const customizationError = document.getElementById("customizationError");
     const designPreviewSection = document.getElementById("designPreviewSection");
     const designPreviewProduct = document.getElementById("designPreviewProduct");
     const designPreviewArtwork = document.getElementById("designPreviewArtwork");
@@ -1778,9 +1789,14 @@
     let designPreviewPlacement = null;
     let designDragPointerId = null;
     let designPosition = { x: 50, y: 38, size: 25 };
+    let designSelectionId = 0;
 
     function formatPrice(price) {
       return `${Number(price).toLocaleString("fr-DZ")} DZD`;
+    }
+
+    function getDiscountedPrice(price, discountPercent = 0) {
+      return Number((Number(price) * (1 - Number(discountPercent || 0) / 100)).toFixed(2));
     }
 
     function readFileAsDataUrl(file) {
@@ -1795,13 +1811,13 @@
     function updateDesignPreview() {
       const file = designImageInput.files[0];
       const placement = document.querySelector('input[name="designPlacement"]:checked')?.value;
-      const designProduct = cart.find(item => item.productType === "vierge");
+      const designProduct = products.find(item => item.id === selectedProductId);
       if (!file || !placement || !designProduct) {
         designPreviewSection.hidden = true;
         return;
       }
 
-      designPreviewProduct.src = designProduct.selectedImage || designProduct.images?.[0] || designProduct.image;
+      designPreviewProduct.src = selectedProductImage || designProduct.images?.[0] || designProduct.image;
       designPreviewProduct.alt = `Aperçu de ${designProduct.name}`;
       if (file !== designPreviewFile || placement !== designPreviewPlacement) {
         designPosition = {
@@ -1826,18 +1842,23 @@
       designPreviewSection.hidden = false;
     }
 
-    function updateCheckoutDesignFields() {
-      const hasBlankProduct = cart.some(item => item.productType === "vierge");
-      designImageField.hidden = !hasBlankProduct;
-      designPlacementField.hidden = !hasBlankProduct;
-
-      if (!hasBlankProduct) {
-        designImageInput.value = "";
-        document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
-          input.checked = false;
-        });
-        designPreviewSection.hidden = true;
+    function resetDesignEditor() {
+      designImageInput.value = "";
+      document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
+        input.checked = false;
+      });
+      designPreviewSection.hidden = true;
+      if (designPreviewArtwork.dataset.objectUrl) {
+        URL.revokeObjectURL(designPreviewArtwork.dataset.objectUrl);
+        delete designPreviewArtwork.dataset.objectUrl;
       }
+      designPreviewFile = null;
+      designPreviewPlacement = null;
+      designPosition = { x: 50, y: 38, size: 25 };
+      designScaleInput.value = "25";
+      designScaleValue.value = "25%";
+      designScaleValue.textContent = "25%";
+      customizationError.textContent = "";
     }
 
     function updateDesignArtworkTransform() {
@@ -1915,9 +1936,7 @@
       checkoutError.textContent = "";
       document.getElementById("humanCheck").checked = false;
       document.getElementById("website").value = "";
-      updateCheckoutDesignFields();
       updateDeliveryOptions();
-      updateDesignPreview();
       checkoutOpenedAt = Date.now();
       checkoutModal.classList.add("open");
       checkoutModal.setAttribute("aria-hidden", "false");
@@ -1958,6 +1977,11 @@
             <button class="mini-btn secondary" data-admin-stock="${product.id}" type="button">Enregistrer</button>
             <button class="mini-btn danger" data-admin-delete="${product.id}" type="button">Supprimer</button>
           </div>
+          <div class="admin-discount-actions">
+            <input type="number" min="0" max="100" step="0.01" value="${Number(product.discountPercent || 0)}" aria-label="Réduction en pourcentage pour ${product.name}" data-discount-input="${product.id}" />
+            <span>%</span>
+            <button class="mini-btn secondary" data-admin-discount="${product.id}" type="button">Appliquer la réduction</button>
+          </div>
         </div>
       `).join("");
     }
@@ -1993,6 +2017,8 @@
         const tagLabel = product.isPromotion ? "Promotion" : (product.tag || "Nouveau");
         const stockQuantity = Number(product.stockQuantity || 0);
         const isOutOfStock = stockQuantity <= 0;
+        const discountPercent = Number(product.discountPercent || 0);
+        const displayedPrice = getDiscountedPrice(product.price, discountPercent);
 
         card.innerHTML = `
           <div class="product-gallery">
@@ -2011,7 +2037,7 @@
             <span class="tag ${product.isPromotion ? 'promo-tag' : ''}">${tagLabel}</span>
             <h3 class="product-name">${product.name}</h3>
             <p class="product-desc">${product.description}</p>
-            <p class="product-stock ${isOutOfStock ? "out-of-stock" : ""}">${isOutOfStock ? "Rupture de stock" : `En stock : ${stockQuantity}`}</p>
+            ${isOutOfStock ? '<p class="product-stock out-of-stock">Indisponible</p>' : ""}
             <div class="product-options">
               <div class="product-option">
                 <span>Taille</span>
@@ -2044,7 +2070,10 @@
               </div>
             </div>
             <div class="product-bottom">
-              <span class="price">${formatPrice(product.price)}</span>
+              <div class="price-list">
+                <span class="price">${formatPrice(displayedPrice)}</span>
+                ${discountPercent > 0 ? `<span class="price-old">${formatPrice(product.price)}</span><span class="discount-badge">-${discountPercent}%</span>` : ""}
+              </div>
               <div class="card-actions">
                 <button class="mini-btn secondary" data-action="customize" data-id="${product.id}" ${isOutOfStock ? "disabled" : ""}>Personnaliser</button>
                 <button class="mini-btn" data-action="add" data-id="${product.id}" ${isOutOfStock ? "disabled" : ""}>${isOutOfStock ? "Indisponible" : "Ajouter"}</button>
@@ -2057,7 +2086,7 @@
       });
     }
 
-    function addToCart(productId, custom = {}, selectedImage = null, selectedImageIndex = 0) {
+    function addToCart(productId, custom = {}, selectedImage = null, selectedImageIndex = 0, designFile = null) {
       const product = products.find(item => item.id === productId);
       if (!product) return;
 
@@ -2080,10 +2109,13 @@
       } else {
         cart.push({
           ...product,
+          originalPrice: Number(product.price),
+          price: getDiscountedPrice(product.price, product.discountPercent),
           quantity: 1,
           custom,
           selectedImage: selectedImage || product.image,
-          selectedImageIndex
+          selectedImageIndex,
+          designFile
         });
       }
 
@@ -2139,8 +2171,11 @@
             <img src="${item.selectedImage || item.image}" alt="${item.name} - photo ${(item.selectedImageIndex || 0) + 1}" />
             <div class="cart-item-info">
               <div class="cart-item-name">${item.name}</div>
-              <div class="cart-item-meta">${customInfo}<br />${item.custom.color || "Couleur standard"}<br />Photo ${(item.selectedImageIndex || 0) + 1}</div>
-              <div class="cart-item-price">${formatPrice(item.price)}</div>
+              <div class="cart-item-meta">${customInfo}<br />${item.custom.color || "Couleur standard"}<br />Photo ${(item.selectedImageIndex || 0) + 1}${item.designFile ? `<br />Design ${item.custom.designPlacement === "avant" ? "avant" : "dos"} • ${Math.round(item.custom.designSize)}%` : ""}</div>
+              <div class="cart-item-price">
+                ${formatPrice(item.price)}
+                ${Number(item.discountPercent || 0) > 0 ? `<span class="price-old">${formatPrice(item.originalPrice ?? item.price)}</span><span class="discount-badge">-${item.discountPercent}%</span>` : ""}
+              </div>
               <div class="qty-box">
                 <button data-action="decrease" data-id="${item.id}" data-image-index="${item.selectedImageIndex || 0}" data-custom='${JSON.stringify(item.custom)}'>-</button>
                 <span>${item.quantity}</span>
@@ -2166,6 +2201,8 @@
       const mainImage = card?.querySelector(".product-main-image");
       selectedProductImage = mainImage?.getAttribute("src") || product.image;
       selectedProductImageIndex = Number(mainImage?.dataset.photoIndex || 0);
+      customizationDesignFields.hidden = product.productType !== "vierge";
+      resetDesignEditor();
 
       const availableSizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ["XS", "S", "M", "L", "XL", "XXL"];
       const availableColors = Array.isArray(product.colors) && product.colors.length ? product.colors : ["Noir", "Blanc", "Beige", "Crème", "Rouge", "Bleu", "Bleu roi", "Sky bleu"];
@@ -2183,6 +2220,7 @@
       selectedProductImage = null;
       selectedProductImageIndex = 0;
       noteInput.value = "";
+      resetDesignEditor();
     }
 
     document.addEventListener("click", function (event) {
@@ -2325,19 +2363,72 @@
             stockButton.disabled = false;
           });
       }
+
+      const discountButton = event.target.closest("[data-admin-discount]");
+      if (discountButton) {
+        const productId = Number(discountButton.dataset.adminDiscount);
+        const discountInput = adminProducts.querySelector(`[data-discount-input="${productId}"]`);
+        const discountPercent = Number(discountInput.value);
+        if (discountInput.value.trim() === "" || !Number.isFinite(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+          productError.className = "admin-error";
+          productError.textContent = "Entrez une réduction comprise entre 0 et 100 %.";
+          return;
+        }
+
+        discountButton.disabled = true;
+        fetch(`/api/products/${productId}/discount`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ discountPercent })
+        })
+          .then(async response => {
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || "La mise à jour a échoué.");
+            return result;
+          })
+          .then(updatedProduct => {
+            products = products.map(product => product.id === updatedProduct.id ? updatedProduct : product);
+            renderAdminProducts();
+            renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
+            productError.className = "checkout-status";
+            productError.textContent = discountPercent > 0 ? "Réduction appliquée." : "Réduction supprimée.";
+          })
+          .catch(error => {
+            productError.className = "admin-error";
+            productError.textContent = error.message || "Impossible de mettre à jour la réduction.";
+            discountButton.disabled = false;
+          });
+      }
     });
 
     confirmCustomization.addEventListener("click", () => {
       if (!selectedProductId) return;
 
+      const product = products.find(item => item.id === selectedProductId);
+      const designFile = product?.productType === "vierge" ? designImageInput.files[0] : null;
+      const designPlacement = document.querySelector('input[name="designPlacement"]:checked')?.value;
+      if (designFile && !designPlacement) {
+        customizationError.textContent = "Choisissez Avant ou Dos pour votre design.";
+        return;
+      }
+      if (designFile && (!/^(image\/png|image\/jpeg|image\/webp)$/.test(designFile.type) || designFile.size > 5 * 1024 * 1024)) {
+        customizationError.textContent = "Choisissez une image PNG, JPG ou WebP de 5 Mo maximum.";
+        return;
+      }
+
       const custom = {
         size: sizeSelect.value,
         fabric: fabricSelect.value,
         color: colorSelect.value,
-        note: noteInput.value.trim()
+        note: noteInput.value.trim(),
+        designId: designFile ? ++designSelectionId : null,
+        designPlacement: designFile ? designPlacement : null,
+        designX: designFile ? designPosition.x : null,
+        designY: designFile ? designPosition.y : null,
+        designSize: designFile ? designPosition.size : null
       };
 
-      addToCart(selectedProductId, custom, selectedProductImage, selectedProductImageIndex);
+      addToCart(selectedProductId, custom, selectedProductImage, selectedProductImageIndex, designFile);
       closeModal();
     });
 
@@ -2512,9 +2603,9 @@
       const file = designImageInput.files[0];
       if (file && file.size > 5 * 1024 * 1024) {
         designImageInput.value = "";
-        checkoutError.textContent = "La photo doit faire moins de 5 Mo.";
+        customizationError.textContent = "La photo doit faire moins de 5 Mo.";
       } else {
-        checkoutError.textContent = "";
+        customizationError.textContent = "";
       }
       updateDesignPreview();
     });
@@ -2531,11 +2622,6 @@
       const customerAddress = document.getElementById("customerAddress").value.trim();
       const customerCity = document.getElementById("customerCity").value.trim();
       const selectedDeliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked');
-      const hasBlankProduct = cart.some(item => item.productType === "vierge");
-      const designFile = hasBlankProduct ? designImageInput.files[0] : null;
-      const designPlacement = hasBlankProduct
-        ? document.querySelector('input[name="designPlacement"]:checked')?.value
-        : null;
       const humanCheck = document.getElementById("humanCheck").checked;
       const honeypotValue = document.getElementById("website").value.trim();
 
@@ -2546,16 +2632,6 @@
 
       if (!selectedDeliveryMethod) {
         checkoutError.textContent = "Choisissez un mode de livraison.";
-        return;
-      }
-
-      if (designFile && !designPlacement) {
-        checkoutError.textContent = "Choisissez l’emplacement du design : avant ou dos.";
-        return;
-      }
-
-      if (designFile && (!/^(image\/png|image\/jpeg|image\/webp)$/.test(designFile.type) || designFile.size > 5 * 1024 * 1024)) {
-        checkoutError.textContent = "Choisissez une image PNG, JPG ou WebP de 5 Mo maximum.";
         return;
       }
 
@@ -2573,7 +2649,11 @@
         const size = item.custom?.size || "M";
         const color = item.custom?.color || "Couleur standard";
         const fabric = item.custom?.fabric || "Matière standard";
-        return `${item.name} x${item.quantity} • Type: ${productTypeLabel} • Photo produit: ${Number(item.selectedImageIndex || 0) + 1} • Taille: ${size} • Couleur: ${color} • Matière: ${fabric} • ${formatPrice(item.price * item.quantity)}`;
+        const discountLabel = Number(item.discountPercent || 0) > 0 ? ` • Remise: ${item.discountPercent}%` : "";
+        const designLabel = item.designFile
+          ? ` • Design ${item.custom.designPlacement === "avant" ? "avant" : "dos"} • ${Math.round(item.custom.designSize)}% • X ${Math.round(item.custom.designX)}%, Y ${Math.round(item.custom.designY)}%`
+          : "";
+        return `${item.name} x${item.quantity} • Type: ${productTypeLabel} • Photo produit: ${Number(item.selectedImageIndex || 0) + 1} • Taille: ${size} • Couleur: ${color} • Matière: ${fabric}${discountLabel}${designLabel} • ${formatPrice(item.price * item.quantity)}`;
       }).join("\n");
       const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const total = subtotal + selectedDeliveryFee;
@@ -2588,7 +2668,7 @@
         "",
         "Produits:",
         orderDetails,
-        designFile ? "Design client : fourni" : "Personnalisation : aucun design fourni",
+        cart.some(item => item.designFile) ? "Design client : fourni" : "Personnalisation : aucun design fourni",
         `Livraison: ${deliveryLabel} - ${formatPrice(selectedDeliveryFee)}`,
         "",
         `Total: ${formatPrice(total)}`
@@ -2620,8 +2700,11 @@
       confirmButton.textContent = "Envoi de la commande...";
 
       try {
-        if (designFile) {
-          const imageData = await readFileAsDataUrl(designFile);
+        const designDetails = [];
+        for (const item of cart) {
+          if (!item.designFile) continue;
+
+          const imageData = await readFileAsDataUrl(item.designFile);
           const uploadResponse = await fetch('/api/designs', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2631,18 +2714,20 @@
           if (!uploadResponse.ok) throw new Error(uploadResult.error || "La photo n’a pas pu être enregistrée.");
 
           const designUrl = new URL(uploadResult.url, window.location.origin).href;
-          const designPositionLabel = designPlacement === "avant" ? "Avant" : "Dos";
-          const designCoordinates = `X ${Math.round(designPosition.x)}%, Y ${Math.round(designPosition.y)}%`;
-          const designSize = `${Math.round(designPosition.size)}%`;
-          const designDetails = `Emplacement du design : ${designPositionLabel}\nPosition : ${designCoordinates}\nTaille : ${designSize}\nPhoto du design : ${designUrl}`;
-          templateParams.order = `${templateParams.order}\n\n${designDetails}`;
+          const designPositionLabel = item.custom.designPlacement === "avant" ? "Avant" : "Dos";
+          const designCoordinates = `X ${Math.round(item.custom.designX)}%, Y ${Math.round(item.custom.designY)}%`;
+          const designSize = `${Math.round(item.custom.designSize)}%`;
+          designDetails.push(`${item.name} — ${designPositionLabel}\nPosition : ${designCoordinates}\nTaille : ${designSize}\nPhoto du design : ${designUrl}`);
+        }
+
+        if (designDetails.length) {
+          const attachedDesignDetails = `Designs clients :\n${designDetails.join("\n\n")}`;
+          templateParams.order = `${templateParams.order}\n\n${attachedDesignDetails}`;
           templateParams.message = templateParams.order;
-          templateParams.order_details = `${templateParams.order_details}\n${designDetails}`;
+          templateParams.order_details = `${templateParams.order_details}\n${attachedDesignDetails}`;
           templateParams.products = templateParams.order_details;
-          templateParams.design_placement = designPositionLabel;
-          templateParams.design_position = designCoordinates;
-          templateParams.design_size = designSize;
-          templateParams.design_image_url = designUrl;
+          templateParams.design_placement = designDetails.map((detail, index) => `${index + 1}. ${detail.split("\n")[0]}`).join("; ");
+          templateParams.design_image_url = designDetails.map(detail => detail.split("Photo du design : ")[1]).join("; ");
         }
 
         await emailjs.send("service_546aau2", "template_riyvbb9", templateParams);
@@ -2650,17 +2735,7 @@
         checkoutError.textContent = `Commande ${orderNumber} confirmée.`;
         cart.length = 0;
         renderCart();
-        designImageInput.value = "";
-        document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
-          input.checked = false;
-        });
-        designPreviewSection.hidden = true;
-        if (designPreviewArtwork.dataset.objectUrl) {
-          URL.revokeObjectURL(designPreviewArtwork.dataset.objectUrl);
-          delete designPreviewArtwork.dataset.objectUrl;
-        }
-        designPreviewFile = null;
-        designPreviewPlacement = null;
+        resetDesignEditor();
         confirmButton.textContent = "Commande envoyée";
       } catch (error) {
         checkoutError.className = "admin-error";
