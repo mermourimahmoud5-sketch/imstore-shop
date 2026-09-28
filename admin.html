@@ -167,10 +167,14 @@
     .product-item strong { display: block; margin-bottom: 4px; }
     .product-item small { display: block; color: var(--muted); margin-bottom: 8px; }
     .admin-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: 90px minmax(0, 1fr) auto;
       gap: 10px;
       margin-top: 12px;
     }
+
+    .admin-row input { min-width: 0; padding: 10px; }
+    .admin-row button { padding: 10px; }
 
     .link {
       display: inline-block;
@@ -234,8 +238,21 @@
       </div>
 
       <div class="field">
+        <label for="productTypeInput">Type de produit</label>
+        <select id="productTypeInput">
+          <option value="pret_a_porter">Prêt-à-porter</option>
+          <option value="vierge">Vierge (personnalisable)</option>
+        </select>
+      </div>
+
+      <div class="field">
         <label for="productPriceInput">Prix</label>
         <input id="productPriceInput" type="number" placeholder="2999" />
+      </div>
+
+      <div class="field">
+        <label for="productStockInput">Stock initial</label>
+        <input id="productStockInput" type="number" min="0" step="1" value="0" />
       </div>
 
       <div class="field">
@@ -309,12 +326,6 @@
   </div>
 
   <script>
-    const DEFAULT_PRODUCTS = [
-      { id: 1, name: 'Costume Signature', category: 'homme', price: 249, tag: 'Best seller', image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=80', description: 'Coupe structurée et finition impeccable.' },
-      { id: 2, name: 'Robe Atelier', category: 'femme', price: 189, tag: 'Nouvelle', image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=900&q=80', description: 'Robe fluide, élégante et sophistiquée.' },
-      { id: 3, name: 'Ensemble Luxe', category: 'ensemble', price: 319, tag: 'Premium', image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80', description: 'Un duo chic pensé pour un look moderne.' }
-    ];
-
     const loginView = document.getElementById('loginView');
     const panelView = document.getElementById('panelView');
     const loginError = document.getElementById('loginError');
@@ -327,9 +338,9 @@
         const response = await fetch('/api/products');
         if (!response.ok) throw new Error('API unavailable');
         const data = await response.json();
-        return Array.isArray(data) && data.length ? data : DEFAULT_PRODUCTS;
+        return Array.isArray(data) ? data : [];
       } catch {
-        return DEFAULT_PRODUCTS;
+        return [];
       }
     }
 
@@ -339,11 +350,19 @@
 
     async function renderProducts() {
       const products = await getProducts();
+      if (!products.length) {
+        productList.innerHTML = '<p class="muted">Aucun produit publié.</p>';
+        return;
+      }
       productList.innerHTML = products.map(product => `
         <div class="product-item">
           <strong>${product.name}</strong>
-          <small>${product.isPromotion ? 'PROMO' : product.tag} • ${product.category} • ${Number(product.price).toLocaleString('fr-DZ')} DZD</small>
-          <button class="danger" data-delete="${product.id}" type="button">Supprimer</button>
+          <small>${product.productType === 'vierge' ? 'VIERGE' : 'PRÊT-À-PORTER'} • ${product.isPromotion ? 'PROMO' : product.tag} • ${product.category} • ${Number(product.price).toLocaleString('fr-DZ')} DZD • Stock : ${Number(product.stockQuantity || 0)}</small>
+          <div class="admin-row">
+            <input type="number" min="0" step="1" value="${Number(product.stockQuantity || 0)}" aria-label="Stock de ${product.name}" data-stock-input="${product.id}" />
+            <button class="secondary" data-stock="${product.id}" type="button">Enregistrer stock</button>
+            <button class="danger" data-delete="${product.id}" type="button">Supprimer</button>
+          </div>
         </div>
       `).join('');
     }
@@ -383,7 +402,10 @@
 
     async function publishProduct() {
       const name = document.getElementById('productNameInput').value.trim();
+      const productType = document.getElementById('productTypeInput').value;
       const price = Number(document.getElementById('productPriceInput').value);
+      const stockInput = document.getElementById('productStockInput');
+      const stockQuantity = Number(stockInput.value);
       const category = document.getElementById('productCategoryInput').value;
       const tag = document.getElementById('productTagInput').value.trim() || 'Nouveau';
       const isPromotion = document.getElementById('productPromoInput').checked;
@@ -394,6 +416,11 @@
 
       if (!name || !price || !description || imageFiles.length === 0) {
         productError.textContent = 'Remplissez tous les champs et ajoutez au moins une photo.';
+        productSuccess.textContent = '';
+        return;
+      }
+      if (stockInput.value.trim() === '' || !Number.isInteger(stockQuantity) || stockQuantity < 0) {
+        productError.textContent = 'Entrez un stock entier supérieur ou égal à zéro.';
         productSuccess.textContent = '';
         return;
       }
@@ -410,6 +437,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name,
+            productType,
+            stockQuantity,
             category,
             price,
             tag,
@@ -430,6 +459,7 @@
 
         document.getElementById('productNameInput').value = '';
         document.getElementById('productPriceInput').value = '';
+        document.getElementById('productStockInput').value = '0';
         document.getElementById('productTagInput').value = '';
         document.getElementById('productPromoInput').checked = false;
         document.getElementById('productImageInput').value = '';
@@ -454,6 +484,35 @@
     document.getElementById('publishProductButton').addEventListener('click', publishProduct);
 
     productList.addEventListener('click', async (event) => {
+      const stockButton = event.target.closest('[data-stock]');
+      if (stockButton) {
+        const id = Number(stockButton.dataset.stock);
+        const stockInput = productList.querySelector(`[data-stock-input="${id}"]`);
+        const stockQuantity = Number(stockInput.value);
+        if (stockInput.value.trim() === '' || !Number.isInteger(stockQuantity) || stockQuantity < 0) {
+          productError.textContent = 'Entrez un stock entier supérieur ou égal à zéro.';
+          productSuccess.textContent = '';
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/products/${id}/stock`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stockQuantity })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Mise à jour impossible.');
+          productError.textContent = '';
+          productSuccess.textContent = 'Stock mis à jour.';
+          await renderProducts();
+        } catch (error) {
+          productError.textContent = error.message || 'Mise à jour impossible.';
+          productSuccess.textContent = '';
+        }
+        return;
+      }
+
       const btn = event.target.closest('[data-delete]');
       if (!btn) return;
       const id = Number(btn.dataset.delete);

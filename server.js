@@ -17,6 +17,8 @@ function formatProduct(row) {
   return {
     id: Number(row.id),
     name: row.name,
+    productType: row.product_type || 'pret_a_porter',
+    stockQuantity: Number(row.stock_quantity || 0),
     category: row.category,
     price: Number(row.price),
     tag: row.tag,
@@ -40,21 +42,31 @@ app.get('/api/products', async (req, res) => {
 });
 
 app.post('/api/products', async (req, res) => {
-  const { name, category, price, tag, image, description, images, isPromotion, sizes, colors } = req.body || {};
+  const { name, productType, stockQuantity, category, price, tag, image, description, images, isPromotion, sizes, colors } = req.body || {};
   const numericPrice = Number(price);
+  const numericStock = stockQuantity === undefined ? 0 : Number(stockQuantity);
+  const normalizedProductType = productType || 'pret_a_porter';
 
   if (!name || !category || !Number.isFinite(numericPrice) || numericPrice <= 0 || !description || !image) {
     return res.status(400).json({ error: 'Tous les champs obligatoires sont requis.' });
   }
+  if (!['pret_a_porter', 'vierge'].includes(normalizedProductType)) {
+    return res.status(400).json({ error: 'Choisissez un type de produit valide.' });
+  }
+  if (!Number.isInteger(numericStock) || numericStock < 0) {
+    return res.status(400).json({ error: 'Le stock doit être un nombre entier positif ou nul.' });
+  }
 
   try {
     const result = await pool.query(
-      `INSERT INTO products (id, name, category, price, tag, image, description, images, sizes, colors, is_promotion)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `INSERT INTO products (id, name, product_type, stock_quantity, category, price, tag, image, description, images, sizes, colors, is_promotion)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        RETURNING *`,
       [
         Date.now(),
         String(name).trim(),
+        normalizedProductType,
+        numericStock,
         String(category).trim(),
         numericPrice,
         String(tag || 'Nouveau').trim(),
@@ -70,6 +82,25 @@ app.post('/api/products', async (req, res) => {
   } catch (error) {
     console.error('Erreur de sauvegarde du produit :', error);
     return res.status(500).json({ error: 'Impossible d’enregistrer le produit.' });
+  }
+});
+
+app.patch('/api/products/:id/stock', async (req, res) => {
+  const stockQuantity = Number(req.body && req.body.stockQuantity);
+  if (!Number.isInteger(stockQuantity) || stockQuantity < 0) {
+    return res.status(400).json({ error: 'Le stock doit être un nombre entier positif ou nul.' });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE products SET stock_quantity = $1 WHERE id = $2 RETURNING *',
+      [stockQuantity, req.params.id]
+    );
+    if (!result.rowCount) return res.status(404).json({ error: 'Produit introuvable.' });
+    res.json(formatProduct(result.rows[0]));
+  } catch (error) {
+    console.error('Erreur de mise à jour du stock :', error);
+    res.status(500).json({ error: 'Impossible de mettre à jour le stock.' });
   }
 });
 
@@ -145,6 +176,8 @@ async function startServer() {
     CREATE TABLE IF NOT EXISTS products (
       id BIGINT PRIMARY KEY,
       name TEXT NOT NULL,
+      product_type TEXT NOT NULL DEFAULT 'pret_a_porter',
+      stock_quantity INTEGER NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
       category TEXT NOT NULL,
       price NUMERIC(12, 2) NOT NULL,
       tag TEXT NOT NULL,
@@ -156,6 +189,16 @@ async function startServer() {
       is_promotion BOOLEAN NOT NULL DEFAULT FALSE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
+  `);
+
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS product_type TEXT NOT NULL DEFAULT 'pret_a_porter'
+  `);
+
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS stock_quantity INTEGER NOT NULL DEFAULT 0
   `);
 
   await pool.query(`

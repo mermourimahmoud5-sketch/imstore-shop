@@ -98,36 +98,6 @@
     .nav-links .whatsapp-link:hover,
     .nav-menu a.whatsapp-link:hover { background: #0d7669; }
 
-    .tiktok-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 14px;
-      border-radius: 8px;
-      background: #f5f5f5;
-      color: #111 !important;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .nav-links .tiktok-link:hover,
-    .nav-menu a.tiktok-link:hover { background: #dedede; }
-
-    .instagram-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 14px;
-      border-radius: 8px;
-      background: #c13584;
-      color: #fff !important;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .nav-links .instagram-link:hover,
-    .nav-menu a.instagram-link:hover { background: #a62d72; }
-
     .menu-toggle {
       display: inline-flex;
       flex-direction: column;
@@ -1050,47 +1020,31 @@
     }
 
     .design-preview-artwork {
-      left: var(--design-x, 50%);
-      top: var(--design-y, 38%);
-      width: var(--design-size, 25%);
-      height: var(--design-size, 25%);
+      left: 50%;
+      top: 38%;
+      width: 25%;
+      height: auto;
+      max-width: 80%;
+      max-height: 80%;
       transform: translate(-50%, -50%);
+      cursor: move;
       touch-action: none;
-      cursor: grab;
       user-select: none;
     }
 
-    .design-preview-artwork:active { cursor: grabbing; }
+    .design-preview-artwork[data-placement="dos"] { top: 34%; }
 
-    .design-editor-controls {
-      display: grid;
-      width: min(350px, 100%);
-      gap: 8px;
-    }
-
-    .design-editor-control {
+    .design-scale-control {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 4px 10px;
       align-items: center;
-      margin: 0;
-      font-size: 0.85rem;
-      font-weight: 700;
+      gap: 8px 12px;
+      width: min(320px, 100%);
     }
 
-    .design-editor-control input {
-      grid-column: 1 / -1;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-      accent-color: var(--gold-dark);
-      cursor: pointer;
-    }
+    .design-scale-control label { font-weight: 700; }
 
-    .design-editor-control output {
-      color: var(--muted);
-      font-variant-numeric: tabular-nums;
-    }
+    .design-scale-control input { grid-column: 1 / -1; accent-color: var(--gold-dark); }
 
     .design-preview-position {
       position: absolute;
@@ -1154,8 +1108,16 @@
     .admin-divider { border: 0; border-top: 1px solid var(--line); margin: 22px 0; }
     .admin-section-title { margin: 0 0 16px; font-size: 1.1rem; }
     .admin-products { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 14px; }
-    .admin-product-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-weight: 700; }
+    .admin-product-row { display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .admin-product-row strong { display: block; }
+    .admin-product-row small { color: var(--muted); font-weight: 400; }
+    .admin-stock-actions { display: flex; align-items: center; gap: 8px; }
+    .admin-stock-actions input { width: 82px; padding: 8px; }
+    .admin-stock-actions .mini-btn { padding: 8px 10px; }
     .mini-btn.danger { background: #f8e6e1; color: #9b3028; }
+    .mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .product-stock { margin: 8px 0 0; color: var(--success); font-size: 0.85rem; font-weight: 700; }
+    .product-stock.out-of-stock { color: #b33b30; }
 
     @media (max-width: 520px) {
       .admin-form-row { grid-template-columns: 1fr; }
@@ -1186,16 +1148,12 @@
         <a href="#products" data-i18n="navCollections">Collections</a>
         <a href="#promotions" data-i18n="navBlog">Blog</a>
         <a class="whatsapp-link" href="https://wa.me/213559093246" target="_blank" rel="noopener noreferrer" data-i18n="navContact">Contactez-nous</a>
-        <a class="tiktok-link" href="https://www.tiktok.com/@im.store06" target="_blank" rel="noopener noreferrer" data-i18n="navTikTok">TikTok</a>
-        <a class="instagram-link" href="https://www.instagram.com/im.__design_/" target="_blank" rel="noopener noreferrer" data-i18n="navInstagram">Instagram</a>
       </nav>
       <nav class="nav-menu" id="navMenu" aria-label="Menu de la page">
         <a href="#about" data-i18n="navAbout">À propos de la page</a>
         <a href="#products" data-i18n="navProducts">Nos produits</a>
         <a href="#promotions" data-i18n="navPromos">Nos promotions</a>
         <a class="whatsapp-link" href="https://wa.me/213559093246" target="_blank" rel="noopener noreferrer" data-i18n="navContact">Contactez-nous</a>
-        <a class="tiktok-link" href="https://www.tiktok.com/@im.store06" target="_blank" rel="noopener noreferrer" data-i18n="navTikTok">TikTok</a>
-        <a class="instagram-link" href="https://www.instagram.com/im.__design_/" target="_blank" rel="noopener noreferrer" data-i18n="navInstagram">Instagram</a>
       </nav>
       <div class="nav-actions">
         <div class="lang-switch" aria-label="Sélecteur de langue">
@@ -1382,6 +1340,18 @@
             <label for="productNameInput">Nom du produit</label>
             <input id="productNameInput" type="text" placeholder="Ex. T-shirt Signature" />
           </div>
+          <div class="field">
+            <label for="productTypeInput">Type de produit</label>
+            <select id="productTypeInput">
+              <option value="">Choisissez un type</option>
+              <option value="pret_a_porter">Prêt-à-porter</option>
+              <option value="vierge">Vierge (personnalisable)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="productStockInput">Stock initial *</label>
+            <input id="productStockInput" type="number" min="0" step="1" value="0" />
+          </div>
           <div class="admin-form-row">
             <div class="field">
               <label for="productCategoryInput">Catégorie</label>
@@ -1530,13 +1500,13 @@
             <option>El Meniaa</option>
           </select>
         </div>
-        <div class="field">
-          <label for="designImageInput">Photo de votre design *</label>
-          <input id="designImageInput" type="file" accept="image/png,image/jpeg,image/webp" required />
-          <span class="field-hint">PNG, JPG ou WebP, 5 Mo maximum.</span>
+        <div class="field" id="designImageField">
+          <label for="designImageInput">Photo de votre design (facultatif)</label>
+          <input id="designImageInput" type="file" accept="image/png,image/jpeg,image/webp" />
+          <span class="field-hint">Ajoutez un motif si vous souhaitez personnaliser le produit. PNG, JPG ou WebP, 5 Mo maximum.</span>
         </div>
-        <div class="field">
-          <label>Emplacement du design *</label>
+        <div class="field" id="designPlacementField">
+          <label>Emplacement du design (facultatif)</label>
           <div class="design-placement-options">
             <label class="design-placement-choice">
               <input type="radio" name="designPlacement" value="avant" />
@@ -1555,24 +1525,12 @@
             <img class="design-preview-artwork" id="designPreviewArtwork" alt="Votre design" />
             <span class="design-preview-position" id="designPreviewPosition"></span>
           </div>
-          <div class="design-editor-controls">
-            <label class="design-editor-control" for="designSizeInput">
-              <span>Taille du motif</span>
-              <output id="designSizeOutput" for="designSizeInput">25 %</output>
-              <input id="designSizeInput" type="range" min="10" max="70" step="1" value="25" />
-            </label>
-            <label class="design-editor-control" for="designXInput">
-              <span>Position horizontale</span>
-              <output id="designXOutput" for="designXInput">50 %</output>
-              <input id="designXInput" type="range" min="10" max="90" step="1" value="50" />
-            </label>
-            <label class="design-editor-control" for="designYInput">
-              <span>Position verticale</span>
-              <output id="designYOutput" for="designYInput">38 %</output>
-              <input id="designYInput" type="range" min="10" max="90" step="1" value="38" />
-            </label>
+          <div class="design-scale-control">
+            <label for="designScaleInput">Taille du design</label>
+            <output id="designScaleValue" for="designScaleInput">25%</output>
+            <input id="designScaleInput" type="range" min="5" max="80" value="25" aria-label="Taille du design" />
           </div>
-          <p class="design-preview-note">Déplacez le motif sur l’image ou utilisez les curseurs pour le placer précisément.</p>
+          <p class="design-preview-note">Aperçu indicatif du placement sur la première photo du produit.</p>
         </div>
         <div class="field">
           <label>Mode de livraison *</label>
@@ -1615,8 +1573,6 @@
         navProducts: "Nos produits",
         navPromos: "Nos promotions",
         navContact: "Contactez-nous",
-        navTikTok: "TikTok",
-        navInstagram: "Instagram",
         adminAccess: "Espace admin",
         cartLabel: "Panier",
         heroEyebrow: "Mode luxe personnalisée",
@@ -1644,8 +1600,6 @@
         navProducts: "منتجاتنا",
         navPromos: "عروضنا",
         navContact: "اتصل بنا",
-        navTikTok: "تيك توك",
-        navInstagram: "إنستغرام",
         adminAccess: "مساحة الإدارة",
         cartLabel: "السلة",
         heroEyebrow: "أسلوب فاخر مخصص",
@@ -1806,28 +1760,24 @@
     const domicileDeliveryLabel = document.getElementById("domicileDeliveryLabel");
     const checkoutTotal = document.getElementById("checkoutTotal");
     const designImageInput = document.getElementById("designImageInput");
+    const designImageField = document.getElementById("designImageField");
+    const designPlacementField = document.getElementById("designPlacementField");
     const designPreviewSection = document.getElementById("designPreviewSection");
-    const designPreviewFrame = document.querySelector(".design-preview-frame");
     const designPreviewProduct = document.getElementById("designPreviewProduct");
     const designPreviewArtwork = document.getElementById("designPreviewArtwork");
     const designPreviewPosition = document.getElementById("designPreviewPosition");
-    const designSizeInput = document.getElementById("designSizeInput");
-    const designSizeOutput = document.getElementById("designSizeOutput");
-    const designXInput = document.getElementById("designXInput");
-    const designXOutput = document.getElementById("designXOutput");
-    const designYInput = document.getElementById("designYInput");
-    const designYOutput = document.getElementById("designYOutput");
+    const designScaleInput = document.getElementById("designScaleInput");
+    const designScaleValue = document.getElementById("designScaleValue");
     const orderEmail = "mermourimahmoud833@gmail.com";
 
     let selectedProductId = null;
     let selectedProductImage = null;
     let selectedProductImageIndex = 0;
-    let designScale = 25;
-    let designX = 50;
-    let designY = 38;
-    let previewedDesignFile = null;
-    let designPreviewObjectUrl = null;
     let checkoutOpenedAt = 0;
+    let designPreviewFile = null;
+    let designPreviewPlacement = null;
+    let designDragPointerId = null;
+    let designPosition = { x: 50, y: 38, size: 25 };
 
     function formatPrice(price) {
       return `${Number(price).toLocaleString("fr-DZ")} DZD`;
@@ -1842,77 +1792,64 @@
       });
     }
 
-    function updateDesignTransform() {
-      const margin = designScale / 2;
-      designX = Math.max(margin, Math.min(100 - margin, designX));
-      designY = Math.max(margin, Math.min(100 - margin, designY));
-      designPreviewFrame.style.setProperty("--design-x", `${designX}%`);
-      designPreviewFrame.style.setProperty("--design-y", `${designY}%`);
-      designPreviewFrame.style.setProperty("--design-size", `${designScale}%`);
-      designSizeInput.value = String(designScale);
-      designSizeOutput.textContent = `${designScale} %`;
-      designXInput.min = String(margin);
-      designXInput.max = String(100 - margin);
-      designXInput.value = String(designX);
-      designXOutput.textContent = `${Math.round(designX)} %`;
-      designYInput.min = String(margin);
-      designYInput.max = String(100 - margin);
-      designYInput.value = String(designY);
-      designYOutput.textContent = `${Math.round(designY)} %`;
-    }
-
     function updateDesignPreview() {
       const file = designImageInput.files[0];
       const placement = document.querySelector('input[name="designPlacement"]:checked')?.value;
-      if (!file || !placement || !cart.length) {
+      const designProduct = cart.find(item => item.productType === "vierge");
+      if (!file || !placement || !designProduct) {
         designPreviewSection.hidden = true;
         return;
       }
 
-      const firstProduct = cart[0];
-      designPreviewProduct.src = firstProduct.selectedImage || firstProduct.images?.[0] || firstProduct.image;
-      designPreviewProduct.alt = `Aperçu de ${firstProduct.name}`;
-      if (previewedDesignFile !== file) {
-        if (designPreviewObjectUrl) URL.revokeObjectURL(designPreviewObjectUrl);
-        designPreviewObjectUrl = URL.createObjectURL(file);
-        previewedDesignFile = file;
-        designPreviewArtwork.src = designPreviewObjectUrl;
+      designPreviewProduct.src = designProduct.selectedImage || designProduct.images?.[0] || designProduct.image;
+      designPreviewProduct.alt = `Aperçu de ${designProduct.name}`;
+      if (file !== designPreviewFile || placement !== designPreviewPlacement) {
+        designPosition = {
+          x: 50,
+          y: placement === "avant" ? 38 : 34,
+          size: Number(designScaleInput.value)
+        };
+        designPreviewPlacement = placement;
+      }
+      if (file !== designPreviewFile) {
+        if (designPreviewArtwork.dataset.objectUrl) {
+          URL.revokeObjectURL(designPreviewArtwork.dataset.objectUrl);
+        }
+        const objectUrl = URL.createObjectURL(file);
+        designPreviewArtwork.src = objectUrl;
+        designPreviewArtwork.dataset.objectUrl = objectUrl;
+        designPreviewFile = file;
       }
       designPreviewArtwork.dataset.placement = placement;
       designPreviewPosition.textContent = placement === "avant" ? "Avant" : "Dos";
-      updateDesignTransform();
+      updateDesignArtworkTransform();
       designPreviewSection.hidden = false;
     }
 
-    designPreviewArtwork.addEventListener("pointerdown", event => {
-      if (designPreviewSection.hidden) return;
-      event.preventDefault();
-      designPreviewArtwork.setPointerCapture(event.pointerId);
-    });
+    function updateCheckoutDesignFields() {
+      const hasBlankProduct = cart.some(item => item.productType === "vierge");
+      designImageField.hidden = !hasBlankProduct;
+      designPlacementField.hidden = !hasBlankProduct;
 
-    designPreviewArtwork.addEventListener("pointermove", event => {
-      if (!designPreviewArtwork.hasPointerCapture(event.pointerId)) return;
-      const bounds = designPreviewFrame.getBoundingClientRect();
-      designX = ((event.clientX - bounds.left) / bounds.width) * 100;
-      designY = ((event.clientY - bounds.top) / bounds.height) * 100;
-      updateDesignTransform();
-    });
+      if (!hasBlankProduct) {
+        designImageInput.value = "";
+        document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
+          input.checked = false;
+        });
+        designPreviewSection.hidden = true;
+      }
+    }
 
-    designScale = Number(designSizeInput.value);
-    designX = Number(designXInput.value);
-    designY = Number(designYInput.value);
-    designSizeInput.addEventListener("input", () => {
-      designScale = Number(designSizeInput.value);
-      updateDesignTransform();
-    });
-    designXInput.addEventListener("input", () => {
-      designX = Number(designXInput.value);
-      updateDesignTransform();
-    });
-    designYInput.addEventListener("input", () => {
-      designY = Number(designYInput.value);
-      updateDesignTransform();
-    });
+    function updateDesignArtworkTransform() {
+      const halfSize = designPosition.size / 2;
+      designPosition.x = Math.max(halfSize, Math.min(100 - halfSize, designPosition.x));
+      designPosition.y = Math.max(halfSize, Math.min(100 - halfSize, designPosition.y));
+      designPreviewArtwork.style.left = `${designPosition.x}%`;
+      designPreviewArtwork.style.top = `${designPosition.y}%`;
+      designPreviewArtwork.style.width = `${designPosition.size}%`;
+      designScaleValue.value = `${designPosition.size}%`;
+      designScaleValue.textContent = `${designPosition.size}%`;
+    }
 
     function applyAppearance() {
       const backgroundUrl = localStorage.getItem("imstoreBackground") || "";
@@ -1978,6 +1915,7 @@
       checkoutError.textContent = "";
       document.getElementById("humanCheck").checked = false;
       document.getElementById("website").value = "";
+      updateCheckoutDesignFields();
       updateDeliveryOptions();
       updateDesignPreview();
       checkoutOpenedAt = Date.now();
@@ -2011,8 +1949,15 @@
     function renderAdminProducts() {
       adminProducts.innerHTML = products.map(product => `
         <div class="admin-product-row">
-          <span>${product.name}</span>
-          <button class="mini-btn danger" data-admin-delete="${product.id}" type="button">Supprimer</button>
+          <div>
+            <strong>${product.name}</strong>
+            <small>${product.productType === "vierge" ? "Vierge" : "Prêt-à-porter"} • Stock actuel : ${Number(product.stockQuantity || 0)}</small>
+          </div>
+          <div class="admin-stock-actions">
+            <input type="number" min="0" step="1" value="${Number(product.stockQuantity || 0)}" aria-label="Stock de ${product.name}" data-stock-input="${product.id}" />
+            <button class="mini-btn secondary" data-admin-stock="${product.id}" type="button">Enregistrer</button>
+            <button class="mini-btn danger" data-admin-delete="${product.id}" type="button">Supprimer</button>
+          </div>
         </div>
       `).join("");
     }
@@ -2046,6 +1991,8 @@
         const defaultSize = sizeOptions[0];
         const defaultColor = colorOptions[0];
         const tagLabel = product.isPromotion ? "Promotion" : (product.tag || "Nouveau");
+        const stockQuantity = Number(product.stockQuantity || 0);
+        const isOutOfStock = stockQuantity <= 0;
 
         card.innerHTML = `
           <div class="product-gallery">
@@ -2064,6 +2011,7 @@
             <span class="tag ${product.isPromotion ? 'promo-tag' : ''}">${tagLabel}</span>
             <h3 class="product-name">${product.name}</h3>
             <p class="product-desc">${product.description}</p>
+            <p class="product-stock ${isOutOfStock ? "out-of-stock" : ""}">${isOutOfStock ? "Rupture de stock" : `En stock : ${stockQuantity}`}</p>
             <div class="product-options">
               <div class="product-option">
                 <span>Taille</span>
@@ -2098,8 +2046,8 @@
             <div class="product-bottom">
               <span class="price">${formatPrice(product.price)}</span>
               <div class="card-actions">
-                <button class="mini-btn secondary" data-action="customize" data-id="${product.id}">Personnaliser</button>
-                <button class="mini-btn" data-action="add" data-id="${product.id}">Ajouter</button>
+                <button class="mini-btn secondary" data-action="customize" data-id="${product.id}" ${isOutOfStock ? "disabled" : ""}>Personnaliser</button>
+                <button class="mini-btn" data-action="add" data-id="${product.id}" ${isOutOfStock ? "disabled" : ""}>${isOutOfStock ? "Indisponible" : "Ajouter"}</button>
               </div>
             </div>
           </div>
@@ -2112,6 +2060,14 @@
     function addToCart(productId, custom = {}, selectedImage = null, selectedImageIndex = 0) {
       const product = products.find(item => item.id === productId);
       if (!product) return;
+
+      const quantityInCart = cart
+        .filter(item => item.id === productId)
+        .reduce((total, item) => total + item.quantity, 0);
+      if (quantityInCart >= Number(product.stockQuantity || 0)) {
+        alert("La quantité en stock est insuffisante.");
+        return;
+      }
 
       const existing = cart.find(item =>
         item.id === productId &&
@@ -2135,14 +2091,33 @@
       document.getElementById("cartPanel").classList.add("open");
     }
 
-    function updateQuantity(productId, custom, delta) {
-      const item = cart.find(cartItem => cartItem.id === productId && JSON.stringify(cartItem.custom) === JSON.stringify(custom));
+    function updateQuantity(productId, custom, delta, selectedImageIndex = 0) {
+      const item = cart.find(cartItem =>
+        cartItem.id === productId &&
+        JSON.stringify(cartItem.custom) === JSON.stringify(custom) &&
+        cartItem.selectedImageIndex === selectedImageIndex
+      );
       if (!item) return;
+
+      if (delta > 0) {
+        const product = products.find(productItem => productItem.id === productId);
+        const quantityInCart = cart
+          .filter(cartItem => cartItem.id === productId)
+          .reduce((total, cartItem) => total + cartItem.quantity, 0);
+        if (quantityInCart >= Number(product?.stockQuantity || 0)) {
+          alert("La quantité en stock est insuffisante.");
+          return;
+        }
+      }
 
       item.quantity += delta;
 
       if (item.quantity <= 0) {
-        const index = cart.findIndex(cartItem => cartItem.id === productId && JSON.stringify(cartItem.custom) === JSON.stringify(custom));
+        const index = cart.findIndex(cartItem =>
+          cartItem.id === productId &&
+          JSON.stringify(cartItem.custom) === JSON.stringify(custom) &&
+          cartItem.selectedImageIndex === selectedImageIndex
+        );
         if (index !== -1) cart.splice(index, 1);
       }
 
@@ -2167,9 +2142,9 @@
               <div class="cart-item-meta">${customInfo}<br />${item.custom.color || "Couleur standard"}<br />Photo ${(item.selectedImageIndex || 0) + 1}</div>
               <div class="cart-item-price">${formatPrice(item.price)}</div>
               <div class="qty-box">
-                <button data-action="decrease" data-id="${item.id}" data-custom='${JSON.stringify(item.custom)}'>-</button>
+                <button data-action="decrease" data-id="${item.id}" data-image-index="${item.selectedImageIndex || 0}" data-custom='${JSON.stringify(item.custom)}'>-</button>
                 <span>${item.quantity}</span>
-                <button data-action="increase" data-id="${item.id}" data-custom='${JSON.stringify(item.custom)}'>+</button>
+                <button data-action="increase" data-id="${item.id}" data-image-index="${item.selectedImageIndex || 0}" data-custom='${JSON.stringify(item.custom)}'>+</button>
               </div>
             </div>
           `;
@@ -2216,8 +2191,9 @@
         const gallery = photoChoice.closest(".product-gallery");
         const mainImage = gallery.querySelector(".product-main-image");
         const selectedIndex = photoChoice.dataset.photoIndex;
+        const productName = gallery.closest(".product-card").querySelector(".product-name").textContent;
         mainImage.src = photoChoice.querySelector("img").getAttribute("src");
-        mainImage.alt = `${gallery.closest(".product-card").querySelector(".product-name").textContent} - photo ${Number(selectedIndex) + 1}`;
+        mainImage.alt = `${productName} - photo ${Number(selectedIndex) + 1}`;
         mainImage.dataset.photoIndex = selectedIndex;
         gallery.querySelectorAll(".product-photo-choice").forEach(button => {
           const selected = button === photoChoice;
@@ -2274,12 +2250,12 @@
 
         if (action === "increase") {
           const custom = event.target.dataset.custom ? JSON.parse(event.target.dataset.custom) : {};
-          updateQuantity(id, custom, 1);
+          updateQuantity(id, custom, 1, Number(event.target.dataset.imageIndex || 0));
         }
 
         if (action === "decrease") {
           const custom = event.target.dataset.custom ? JSON.parse(event.target.dataset.custom) : {};
-          updateQuantity(id, custom, -1);
+          updateQuantity(id, custom, -1, Number(event.target.dataset.imageIndex || 0));
         }
       }
 
@@ -2311,6 +2287,42 @@
             products = products.filter(product => product.id !== id);
             renderProducts();
             renderAdminProducts();
+          });
+      }
+
+      const stockButton = event.target.closest("[data-admin-stock]");
+      if (stockButton) {
+        const productId = Number(stockButton.dataset.adminStock);
+        const stockInput = adminProducts.querySelector(`[data-stock-input="${productId}"]`);
+        const stockQuantity = Number(stockInput.value);
+        if (stockInput.value.trim() === "" || !Number.isInteger(stockQuantity) || stockQuantity < 0) {
+          productError.className = "admin-error";
+          productError.textContent = "Entrez une quantité entière supérieure ou égale à zéro.";
+          return;
+        }
+
+        stockButton.disabled = true;
+        fetch(`/api/products/${productId}/stock`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stockQuantity })
+        })
+          .then(async response => {
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || "La mise à jour a échoué.");
+            return result;
+          })
+          .then(updatedProduct => {
+            products = products.map(product => product.id === updatedProduct.id ? updatedProduct : product);
+            renderAdminProducts();
+            renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
+            productError.className = "checkout-status";
+            productError.textContent = "Stock mis à jour.";
+          })
+          .catch(error => {
+            productError.className = "admin-error";
+            productError.textContent = error.message || "Impossible de mettre à jour le stock.";
+            stockButton.disabled = false;
           });
       }
     });
@@ -2384,6 +2396,9 @@
 
     document.getElementById("publishProductButton").addEventListener("click", async () => {
       const name = document.getElementById("productNameInput").value.trim();
+      const productType = document.getElementById("productTypeInput").value;
+      const stockInput = document.getElementById("productStockInput");
+      const stockQuantity = Number(stockInput.value);
       const price = Number(document.getElementById("productPriceInput").value);
       const imageFiles = Array.from(document.getElementById("productImageInput").files);
       const description = document.getElementById("productDescriptionInput").value.trim();
@@ -2391,6 +2406,14 @@
       const colors = Array.from(document.querySelectorAll('#productColorOptions input:checked'), input => input.value);
       if (!name || !price || imageFiles.length === 0 || !description) {
         productError.textContent = "Remplissez tous les champs obligatoires.";
+        return;
+      }
+      if (!productType) {
+        productError.textContent = "Choisissez un type de produit.";
+        return;
+      }
+      if (stockInput.value.trim() === "" || !Number.isInteger(stockQuantity) || stockQuantity < 0) {
+        productError.textContent = "Saisissez un stock initial entier supérieur ou égal à zéro.";
         return;
       }
       if (!sizes.length || !colors.length) {
@@ -2401,6 +2424,8 @@
       const images = await Promise.all(imageFiles.map(readFileAsDataUrl));
       const payload = {
         name,
+        productType,
+        stockQuantity,
         category: document.getElementById("productCategoryInput").value,
         price,
         tag: document.getElementById("productTagInput").value.trim() || "Nouveau",
@@ -2423,6 +2448,7 @@
         await loadProducts();
         renderAdminProducts();
         document.getElementById("productNameInput").value = "";
+        document.getElementById("productTypeInput").value = "";
         document.getElementById("productPriceInput").value = "";
         document.getElementById("productTagInput").value = "";
         document.getElementById("productImageInput").value = "";
@@ -2455,6 +2481,33 @@
     });
 
     customerCity.addEventListener("change", updateDeliveryOptions);
+    designScaleInput.addEventListener("input", () => {
+      designPosition.size = Number(designScaleInput.value);
+      updateDesignArtworkTransform();
+    });
+
+    designPreviewArtwork.addEventListener("pointerdown", event => {
+      if (designPreviewSection.hidden) return;
+      event.preventDefault();
+      designDragPointerId = event.pointerId;
+      designPreviewArtwork.setPointerCapture(event.pointerId);
+    });
+
+    designPreviewArtwork.addEventListener("pointermove", event => {
+      if (event.pointerId !== designDragPointerId) return;
+      const frame = document.querySelector(".design-preview-frame").getBoundingClientRect();
+      designPosition.x = ((event.clientX - frame.left) / frame.width) * 100;
+      designPosition.y = ((event.clientY - frame.top) / frame.height) * 100;
+      updateDesignArtworkTransform();
+    });
+
+    designPreviewArtwork.addEventListener("pointerup", () => {
+      designDragPointerId = null;
+    });
+    designPreviewArtwork.addEventListener("pointercancel", () => {
+      designDragPointerId = null;
+    });
+
     designImageInput.addEventListener("change", () => {
       const file = designImageInput.files[0];
       if (file && file.size > 5 * 1024 * 1024) {
@@ -2466,10 +2519,7 @@
       updateDesignPreview();
     });
     document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
-      input.addEventListener("change", () => {
-        designY = input.value === "avant" ? 38 : 34;
-        updateDesignPreview();
-      });
+      input.addEventListener("change", updateDesignPreview);
     });
     document.querySelectorAll('input[name="deliveryMethod"]').forEach(input => {
       input.addEventListener("change", updateCheckoutTotal);
@@ -2481,8 +2531,11 @@
       const customerAddress = document.getElementById("customerAddress").value.trim();
       const customerCity = document.getElementById("customerCity").value.trim();
       const selectedDeliveryMethod = document.querySelector('input[name="deliveryMethod"]:checked');
-      const designFile = designImageInput.files[0];
-      const designPlacement = document.querySelector('input[name="designPlacement"]:checked')?.value;
+      const hasBlankProduct = cart.some(item => item.productType === "vierge");
+      const designFile = hasBlankProduct ? designImageInput.files[0] : null;
+      const designPlacement = hasBlankProduct
+        ? document.querySelector('input[name="designPlacement"]:checked')?.value
+        : null;
       const humanCheck = document.getElementById("humanCheck").checked;
       const honeypotValue = document.getElementById("website").value.trim();
 
@@ -2496,17 +2549,12 @@
         return;
       }
 
-      if (!designFile) {
-        checkoutError.textContent = "Ajoutez la photo de votre design.";
-        return;
-      }
-
-      if (!designPlacement) {
+      if (designFile && !designPlacement) {
         checkoutError.textContent = "Choisissez l’emplacement du design : avant ou dos.";
         return;
       }
 
-      if (!/^(image\/png|image\/jpeg|image\/webp)$/.test(designFile.type) || designFile.size > 5 * 1024 * 1024) {
+      if (designFile && (!/^(image\/png|image\/jpeg|image\/webp)$/.test(designFile.type) || designFile.size > 5 * 1024 * 1024)) {
         checkoutError.textContent = "Choisissez une image PNG, JPG ou WebP de 5 Mo maximum.";
         return;
       }
@@ -2521,10 +2569,11 @@
 
       const orderNumber = `IM-${Date.now().toString().slice(-6)}`;
       const orderDetails = cart.map(item => {
+        const productTypeLabel = item.productType === "vierge" ? "Vierge" : "Prêt-à-porter";
         const size = item.custom?.size || "M";
         const color = item.custom?.color || "Couleur standard";
         const fabric = item.custom?.fabric || "Matière standard";
-        return `${item.name} x${item.quantity} • Photo: ${Number(item.selectedImageIndex || 0) + 1} • Taille: ${size} • Couleur: ${color} • Matière: ${fabric} • ${formatPrice(item.price * item.quantity)}`;
+        return `${item.name} x${item.quantity} • Type: ${productTypeLabel} • Photo produit: ${Number(item.selectedImageIndex || 0) + 1} • Taille: ${size} • Couleur: ${color} • Matière: ${fabric} • ${formatPrice(item.price * item.quantity)}`;
       }).join("\n");
       const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const total = subtotal + selectedDeliveryFee;
@@ -2539,6 +2588,7 @@
         "",
         "Produits:",
         orderDetails,
+        designFile ? "Design client : fourni" : "Personnalisation : aucun design fourni",
         `Livraison: ${deliveryLabel} - ${formatPrice(selectedDeliveryFee)}`,
         "",
         `Total: ${formatPrice(total)}`
@@ -2570,30 +2620,47 @@
       confirmButton.textContent = "Envoi de la commande...";
 
       try {
-        const imageData = await readFileAsDataUrl(designFile);
-        const uploadResponse = await fetch('/api/designs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageData })
-        });
-        const uploadResult = await uploadResponse.json();
-        if (!uploadResponse.ok) throw new Error(uploadResult.error || "La photo n’a pas pu être enregistrée.");
+        if (designFile) {
+          const imageData = await readFileAsDataUrl(designFile);
+          const uploadResponse = await fetch('/api/designs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageData })
+          });
+          const uploadResult = await uploadResponse.json();
+          if (!uploadResponse.ok) throw new Error(uploadResult.error || "La photo n’a pas pu être enregistrée.");
 
-        const designUrl = new URL(uploadResult.url, window.location.origin).href;
-        const designPositionLabel = designPlacement === "avant" ? "Avant" : "Dos";
-        const designDetails = `Emplacement du design : ${designPositionLabel}\nTaille du motif : ${designScale} %\nPosition du motif : ${Math.round(designX)} % horizontalement, ${Math.round(designY)} % verticalement\nPhoto du design : ${designUrl}`;
-        templateParams.order = `${templateParams.order}\n\n${designDetails}`;
-        templateParams.message = templateParams.order;
-        templateParams.order_details = `${templateParams.order_details}\n${designDetails}`;
-        templateParams.products = templateParams.order_details;
-        templateParams.design_placement = designPositionLabel;
-        templateParams.design_image_url = designUrl;
+          const designUrl = new URL(uploadResult.url, window.location.origin).href;
+          const designPositionLabel = designPlacement === "avant" ? "Avant" : "Dos";
+          const designCoordinates = `X ${Math.round(designPosition.x)}%, Y ${Math.round(designPosition.y)}%`;
+          const designSize = `${Math.round(designPosition.size)}%`;
+          const designDetails = `Emplacement du design : ${designPositionLabel}\nPosition : ${designCoordinates}\nTaille : ${designSize}\nPhoto du design : ${designUrl}`;
+          templateParams.order = `${templateParams.order}\n\n${designDetails}`;
+          templateParams.message = templateParams.order;
+          templateParams.order_details = `${templateParams.order_details}\n${designDetails}`;
+          templateParams.products = templateParams.order_details;
+          templateParams.design_placement = designPositionLabel;
+          templateParams.design_position = designCoordinates;
+          templateParams.design_size = designSize;
+          templateParams.design_image_url = designUrl;
+        }
 
         await emailjs.send("service_546aau2", "template_riyvbb9", templateParams);
         checkoutError.className = "checkout-status";
         checkoutError.textContent = `Commande ${orderNumber} confirmée.`;
         cart.length = 0;
         renderCart();
+        designImageInput.value = "";
+        document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
+          input.checked = false;
+        });
+        designPreviewSection.hidden = true;
+        if (designPreviewArtwork.dataset.objectUrl) {
+          URL.revokeObjectURL(designPreviewArtwork.dataset.objectUrl);
+          delete designPreviewArtwork.dataset.objectUrl;
+        }
+        designPreviewFile = null;
+        designPreviewPlacement = null;
         confirmButton.textContent = "Commande envoyée";
       } catch (error) {
         checkoutError.className = "admin-error";
