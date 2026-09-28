@@ -24,6 +24,8 @@ function formatProduct(row) {
     price: Number(row.price),
     tag: row.tag,
     image: row.image,
+    frontImage: row.front_image || null,
+    backImage: row.back_image || null,
     description: row.description,
     images: row.images,
     sizes: row.sizes,
@@ -43,16 +45,19 @@ app.get('/api/products', async (req, res) => {
 });
 
 app.post('/api/products', async (req, res) => {
-  const { name, productType, stockQuantity, category, price, tag, image, description, images, isPromotion, sizes, colors } = req.body || {};
+  const { name, productType, stockQuantity, category, price, tag, image, frontImage, backImage, description, images, isPromotion, sizes, colors } = req.body || {};
   const numericPrice = Number(price);
   const numericStock = stockQuantity === undefined ? 0 : Number(stockQuantity);
   const normalizedProductType = productType || 'pret_a_porter';
 
-  if (!name || !category || !Number.isFinite(numericPrice) || numericPrice <= 0 || !description || !image) {
+  if (!name || !category || !Number.isFinite(numericPrice) || numericPrice <= 0 || !description || !(image || frontImage)) {
     return res.status(400).json({ error: 'Tous les champs obligatoires sont requis.' });
   }
   if (!['pret_a_porter', 'vierge'].includes(normalizedProductType)) {
     return res.status(400).json({ error: 'Choisissez un type de produit valide.' });
+  }
+  if (normalizedProductType === 'vierge' && (!frontImage || !backImage)) {
+    return res.status(400).json({ error: 'Une photo de la face avant et une photo du dos sont obligatoires.' });
   }
   if (!Number.isInteger(numericStock) || numericStock < 0) {
     return res.status(400).json({ error: 'Le stock doit être un nombre entier positif ou nul.' });
@@ -60,8 +65,8 @@ app.post('/api/products', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `INSERT INTO products (id, name, product_type, stock_quantity, category, price, tag, image, description, images, sizes, colors, is_promotion)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      `INSERT INTO products (id, name, product_type, stock_quantity, category, price, tag, image, front_image, back_image, description, images, sizes, colors, is_promotion)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        RETURNING *`,
       [
         Date.now(),
@@ -71,7 +76,9 @@ app.post('/api/products', async (req, res) => {
         String(category).trim(),
         numericPrice,
         String(tag || 'Nouveau').trim(),
-        String(image),
+        String(frontImage || image),
+        frontImage ? String(frontImage) : null,
+        backImage ? String(backImage) : null,
         String(description).trim(),
         JSON.stringify(Array.isArray(images) && images.length ? images : [String(image)]),
         JSON.stringify(Array.isArray(sizes) ? sizes.map(String) : []),
@@ -246,6 +253,8 @@ async function startServer() {
       sizes JSONB NOT NULL DEFAULT '[]'::jsonb,
       colors JSONB NOT NULL DEFAULT '[]'::jsonb,
       is_promotion BOOLEAN NOT NULL DEFAULT FALSE,
+      front_image TEXT,
+      back_image TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
@@ -263,6 +272,12 @@ async function startServer() {
   await pool.query(`
     ALTER TABLE products
     ADD COLUMN IF NOT EXISTS discount_percent NUMERIC(5, 2) NOT NULL DEFAULT 0
+  `);
+
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS front_image TEXT,
+    ADD COLUMN IF NOT EXISTS back_image TEXT
   `);
 
   await pool.query(`

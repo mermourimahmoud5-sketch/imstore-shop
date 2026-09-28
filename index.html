@@ -1127,6 +1127,48 @@
       font-weight: 700;
     }
 
+    .design-photo-choices {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-top: 10px;
+      padding: 2px 2px 6px;
+    }
+
+    .design-photo-choices[hidden] { display: none; }
+
+    .design-photo-choice {
+      position: relative;
+      flex: 0 0 62px;
+      width: 62px;
+      height: 62px;
+      padding: 0;
+      overflow: hidden;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .design-photo-choice.selected { border-color: var(--gold-dark); }
+
+    .design-photo-choice img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .design-photo-choice span {
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: rgba(17,17,17,0.8);
+      color: #fff;
+      font-size: 0.7rem;
+    }
+
     .checkout-total {
       display: none;
       margin-top: 4px;
@@ -1174,6 +1216,7 @@
     .checkout-status a { color: var(--gold-dark); text-decoration: underline; }
     .admin-panel-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
     .admin-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    #blankProductImagesField[hidden] { display: none; }
     .admin-divider { border: 0; border-top: 1px solid var(--line); margin: 22px 0; }
     .admin-section-title { margin: 0 0 16px; font-size: 1.1rem; }
     .admin-products { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 14px; }
@@ -1353,12 +1396,13 @@
 
       <div class="modal-grid" id="customizationDesignFields" hidden>
         <div class="field">
-          <label for="designImageInput">Photo de votre design (facultatif)</label>
-          <input id="designImageInput" type="file" accept="image/png,image/jpeg,image/webp" />
-          <span class="field-hint">Ajoutez un motif si vous souhaitez personnaliser le produit. PNG, JPG ou WebP, 5 Mo maximum.</span>
+          <label for="designImageInput">Photos de vos designs (facultatif)</label>
+          <input id="designImageInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
+          <span class="field-hint">Jusqu’à 5 motifs, PNG, JPG ou WebP, 5 Mo maximum par photo. Réglez chaque motif séparément.</span>
+          <div class="design-photo-choices" id="designPhotoChoices" role="group" aria-label="Choisir le motif à régler" hidden></div>
         </div>
         <div class="field">
-          <label>Emplacement du design (facultatif)</label>
+          <label>Emplacement du motif sélectionné (facultatif)</label>
           <div class="design-placement-options">
             <label class="design-placement-choice">
               <input type="radio" name="designPlacement" value="avant" />
@@ -1501,9 +1545,19 @@
               <label class="variant-option"><input type="checkbox" value="Sky bleu" /> Sky bleu</label>
             </div>
           </div>
-          <div class="field">
+          <div class="field" id="standardProductImagesField">
             <label for="productImageInput">Photos du produit</label>
             <input id="productImageInput" type="file" accept="image/*" multiple />
+          </div>
+          <div class="admin-form-row" id="blankProductImagesField" hidden>
+            <div class="field">
+              <label for="productFrontImageInput">Photo de la face avant *</label>
+              <input id="productFrontImageInput" type="file" accept="image/*" />
+            </div>
+            <div class="field">
+              <label for="productBackImageInput">Photo du dos *</label>
+              <input id="productBackImageInput" type="file" accept="image/*" />
+            </div>
           </div>
           <div class="field">
             <label for="productDescriptionInput">Description</label>
@@ -1835,6 +1889,7 @@
     const domicileDeliveryLabel = document.getElementById("domicileDeliveryLabel");
     const checkoutTotal = document.getElementById("checkoutTotal");
     const designImageInput = document.getElementById("designImageInput");
+    const designPhotoChoices = document.getElementById("designPhotoChoices");
     const customizationDesignFields = document.getElementById("customizationDesignFields");
     const customizationError = document.getElementById("customizationError");
     const designPreviewSection = document.getElementById("designPreviewSection");
@@ -1853,8 +1908,10 @@
     let selectedCustomSize = null;
     let selectedCustomColor = null;
     let checkoutOpenedAt = 0;
-    let designPreviewFile = null;
-    let designPreviewPlacement = null;
+    let designFiles = [];
+    let designObjectUrls = [];
+    let designSettings = [];
+    let selectedDesignIndex = 0;
     let designDragPointerId = null;
     let designPosition = { x: 50, y: 38, size: 25 };
     let designProductZoom = 1;
@@ -1887,9 +1944,12 @@
       });
     }
 
-    async function createCustomizedProductPreview(item) {
-      const productImage = await loadImage(item.selectedImage || item.image);
-      const designImage = await loadImage(await readFileAsDataUrl(item.designFile));
+    async function createCustomizedProductPreview(item, placement) {
+      const productImages = Array.isArray(item.images) ? item.images : [];
+      const productImageUrl = placement === "avant"
+        ? item.frontImage || productImages[0] || item.selectedImage || item.image
+        : item.backImage || productImages[1] || item.frontImage || productImages[0] || item.selectedImage || item.image;
+      const productImage = await loadImage(productImageUrl);
       const canvas = document.createElement("canvas");
       canvas.width = 900;
       canvas.height = 1125;
@@ -1912,59 +1972,66 @@
         productHeight
       );
 
-      let artworkWidth = canvas.width * Number(item.custom.designSize) / 100;
-      let artworkHeight = artworkWidth * designImage.naturalHeight / designImage.naturalWidth;
-      const maxArtworkHeight = canvas.height * 0.8;
-      if (artworkHeight > maxArtworkHeight) {
-        const scale = maxArtworkHeight / artworkHeight;
-        artworkWidth *= scale;
-        artworkHeight = maxArtworkHeight;
+      for (const design of (item.designFiles || []).filter(design => design.placement === placement)) {
+        const designImage = await loadImage(await readFileAsDataUrl(design.file));
+        let artworkWidth = canvas.width * Number(design.size) / 100;
+        let artworkHeight = artworkWidth * designImage.naturalHeight / designImage.naturalWidth;
+        const maxArtworkHeight = canvas.height * 0.8;
+        if (artworkHeight > maxArtworkHeight) {
+          const scale = maxArtworkHeight / artworkHeight;
+          artworkWidth *= scale;
+          artworkHeight = maxArtworkHeight;
+        }
+        const centerX = canvas.width * Number(design.x) / 100;
+        const centerY = canvas.height * Number(design.y) / 100;
+        context.drawImage(
+          designImage,
+          centerX - artworkWidth / 2,
+          centerY - artworkHeight / 2,
+          artworkWidth,
+          artworkHeight
+        );
       }
-      const centerX = canvas.width * Number(item.custom.designX) / 100;
-      const centerY = canvas.height * Number(item.custom.designY) / 100;
-      context.drawImage(
-        designImage,
-        centerX - artworkWidth / 2,
-        centerY - artworkHeight / 2,
-        artworkWidth,
-        artworkHeight
-      );
       return canvas.toDataURL("image/jpeg", 0.82);
     }
 
     function updateDesignPreview() {
-      const file = designImageInput.files[0];
-      const placement = document.querySelector('input[name="designPlacement"]:checked')?.value;
+      const file = designFiles[selectedDesignIndex];
+      const settings = designSettings[selectedDesignIndex];
+      const placement = settings?.placement;
       const designProduct = products.find(item => item.id === selectedProductId);
-      if (!file || !placement || !designProduct) {
+      if (!file || !settings || !placement || !designProduct) {
         designPreviewSection.hidden = true;
         return;
       }
 
-      designPreviewProduct.src = selectedProductImage || designProduct.images?.[0] || designProduct.image;
+      const productImages = Array.isArray(designProduct.images) ? designProduct.images : [];
+      designPreviewProduct.src = placement === "avant"
+        ? designProduct.frontImage || productImages[0] || selectedProductImage || designProduct.image
+        : designProduct.backImage || productImages[1] || designProduct.frontImage || productImages[0] || selectedProductImage || designProduct.image;
       designPreviewProduct.alt = `Aperçu de ${designProduct.name}`;
       designPreviewProduct.style.transform = `scale(${designProductZoom})`;
-      if (file !== designPreviewFile || placement !== designPreviewPlacement) {
-        designPosition = {
-          x: 50,
-          y: placement === "avant" ? 38 : 34,
-          size: Number(designScaleInput.value)
-        };
-        designPreviewPlacement = placement;
-      }
-      if (file !== designPreviewFile) {
-        if (designPreviewArtwork.dataset.objectUrl) {
-          URL.revokeObjectURL(designPreviewArtwork.dataset.objectUrl);
-        }
-        const objectUrl = URL.createObjectURL(file);
-        designPreviewArtwork.src = objectUrl;
-        designPreviewArtwork.dataset.objectUrl = objectUrl;
-        designPreviewFile = file;
-      }
+      designPosition = { x: settings.x, y: settings.y, size: settings.size };
+      designPreviewArtwork.src = designObjectUrls[selectedDesignIndex];
       designPreviewArtwork.dataset.placement = placement;
-      designPreviewPosition.textContent = placement === "avant" ? "Avant" : "Dos";
+      designPreviewPosition.textContent = `${selectedDesignIndex + 1}/${designFiles.length} • ${placement === "avant" ? "Avant" : "Dos"}`;
+      designScaleInput.value = String(settings.size);
+      designProductZoomInput.value = String(designProductZoom);
+      document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
+        input.checked = input.value === placement;
+      });
       updateDesignArtworkTransform();
       designPreviewSection.hidden = false;
+    }
+
+    function renderDesignPhotoChoices() {
+      designPhotoChoices.innerHTML = designFiles.map((file, index) => `
+        <button class="design-photo-choice ${index === selectedDesignIndex ? "selected" : ""}" type="button" data-design-index="${index}" aria-label="Modifier le motif ${index + 1}" aria-pressed="${index === selectedDesignIndex}">
+          <img src="${designObjectUrls[index]}" alt="" />
+          <span>${index + 1}</span>
+        </button>
+      `).join("");
+      designPhotoChoices.hidden = designFiles.length < 2;
     }
 
     function resetDesignEditor() {
@@ -1973,12 +2040,13 @@
         input.checked = false;
       });
       designPreviewSection.hidden = true;
-      if (designPreviewArtwork.dataset.objectUrl) {
-        URL.revokeObjectURL(designPreviewArtwork.dataset.objectUrl);
-        delete designPreviewArtwork.dataset.objectUrl;
-      }
-      designPreviewFile = null;
-      designPreviewPlacement = null;
+      designObjectUrls.forEach(objectUrl => URL.revokeObjectURL(objectUrl));
+      designFiles = [];
+      designObjectUrls = [];
+      designSettings = [];
+      selectedDesignIndex = 0;
+      designPhotoChoices.innerHTML = "";
+      designPhotoChoices.hidden = true;
       designPosition = { x: 50, y: 38, size: 25 };
       designProductZoom = 1;
       designScaleInput.value = "25";
@@ -1994,6 +2062,9 @@
       const halfSize = designPosition.size / 2;
       designPosition.x = Math.max(halfSize, Math.min(100 - halfSize, designPosition.x));
       designPosition.y = Math.max(halfSize, Math.min(100 - halfSize, designPosition.y));
+      if (designSettings[selectedDesignIndex]) {
+        Object.assign(designSettings[selectedDesignIndex], designPosition);
+      }
       designPreviewArtwork.style.left = `${designPosition.x}%`;
       designPreviewArtwork.style.top = `${designPosition.y}%`;
       designPreviewArtwork.style.width = `${designPosition.size}%`;
@@ -2223,7 +2294,7 @@
       });
     }
 
-    function addToCart(productId, custom = {}, selectedImage = null, selectedImageIndex = 0, designFile = null) {
+    function addToCart(productId, custom = {}, selectedImage = null, selectedImageIndex = 0, selectedDesignFiles = []) {
       const product = products.find(item => item.id === productId);
       if (!product) return;
 
@@ -2252,7 +2323,10 @@
           custom,
           selectedImage: selectedImage || product.image,
           selectedImageIndex,
-          designFile
+          designFiles: selectedDesignFiles.map((file, index) => ({
+            file,
+            ...((custom.designs || [])[index] || {})
+          }))
         });
       }
 
@@ -2308,7 +2382,7 @@
             <img src="${item.selectedImage || item.image}" alt="${item.name} - photo ${(item.selectedImageIndex || 0) + 1}" />
             <div class="cart-item-info">
               <div class="cart-item-name">${item.name}</div>
-              <div class="cart-item-meta">${customInfo}<br />${item.custom.color || "Couleur standard"}<br />Photo ${(item.selectedImageIndex || 0) + 1}${item.designFile ? `<br />Design ${item.custom.designPlacement === "avant" ? "avant" : "dos"} • ${Math.round(item.custom.designSize)}%` : ""}</div>
+              <div class="cart-item-meta">${customInfo}<br />${item.custom.color || "Couleur standard"}<br />Photo ${(item.selectedImageIndex || 0) + 1}${item.designFiles?.length ? `<br />${item.designFiles.length} motif(s) ajouté(s)` : ""}</div>
               <div class="cart-item-price">
                 ${formatPrice(item.price)}
                 ${Number(item.discountPercent || 0) > 0 ? `<span class="price-old">${formatPrice(item.originalPrice ?? item.price)}</span><span class="discount-badge">-${item.discountPercent}%</span>` : ""}
@@ -2367,6 +2441,22 @@
     }
 
     document.addEventListener("click", function (event) {
+      const designPhotoChoice = event.target.closest("[data-design-index]");
+      if (designPhotoChoice) {
+        selectedDesignIndex = Number(designPhotoChoice.dataset.designIndex);
+        renderDesignPhotoChoices();
+        const settings = designSettings[selectedDesignIndex];
+        designPosition = { x: settings.x, y: settings.y, size: settings.size };
+        designScaleInput.value = String(settings.size);
+        designScaleValue.value = `${settings.size}%`;
+        designScaleValue.textContent = `${settings.size}%`;
+        document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
+          input.checked = input.value === settings.placement;
+        });
+        updateDesignPreview();
+        return;
+      }
+
       const customizerSizeChoice = event.target.closest("[data-customizer-size]");
       if (customizerSizeChoice) {
         selectedCustomSize = customizerSizeChoice.dataset.customizerSize;
@@ -2600,14 +2690,9 @@
       if (!selectedProductId) return;
 
       const product = products.find(item => item.id === selectedProductId);
-      const designFile = product?.productType === "vierge" ? designImageInput.files[0] : null;
-      const designPlacement = document.querySelector('input[name="designPlacement"]:checked')?.value;
-      if (designFile && !designPlacement) {
-        customizationError.textContent = "Choisissez Avant ou Dos pour votre design.";
-        return;
-      }
-      if (designFile && (!/^(image\/png|image\/jpeg|image\/webp)$/.test(designFile.type) || designFile.size > 5 * 1024 * 1024)) {
-        customizationError.textContent = "Choisissez une image PNG, JPG ou WebP de 5 Mo maximum.";
+      const selectedDesignFiles = product?.productType === "vierge" ? designFiles : [];
+      if (selectedDesignFiles.some((file, index) => !designSettings[index]?.placement)) {
+        customizationError.textContent = "Choisissez Avant ou Dos pour chaque motif.";
         return;
       }
 
@@ -2616,15 +2701,17 @@
         fabric: fabricSelect.value,
         color: selectedCustomColor,
         note: noteInput.value.trim(),
-        designId: designFile ? ++designSelectionId : null,
-        designPlacement: designFile ? designPlacement : null,
-        designX: designFile ? designPosition.x : null,
-        designY: designFile ? designPosition.y : null,
-        designSize: designFile ? designPosition.size : null,
-        designProductZoom: designFile ? designProductZoom : null
+        designs: selectedDesignFiles.map((file, index) => ({
+          id: ++designSelectionId,
+          placement: designSettings[index].placement,
+          x: designSettings[index].x,
+          y: designSettings[index].y,
+          size: designSettings[index].size
+        })),
+        designProductZoom: selectedDesignFiles.length ? designProductZoom : null
       };
 
-      addToCart(selectedProductId, custom, selectedProductImage, selectedProductImageIndex, designFile);
+      addToCart(selectedProductId, custom, selectedProductImage, selectedProductImageIndex, selectedDesignFiles);
       closeModal();
     });
 
@@ -2688,11 +2775,18 @@
       const stockQuantity = Number(stockInput.value);
       const price = Number(document.getElementById("productPriceInput").value);
       const imageFiles = Array.from(document.getElementById("productImageInput").files);
+      const frontImageFile = document.getElementById("productFrontImageInput").files[0];
+      const backImageFile = document.getElementById("productBackImageInput").files[0];
       const description = document.getElementById("productDescriptionInput").value.trim();
       const sizes = Array.from(document.querySelectorAll('#productSizeOptions input:checked'), input => input.value);
       const colors = Array.from(document.querySelectorAll('#productColorOptions input:checked'), input => input.value);
-      if (!name || !price || imageFiles.length === 0 || !description) {
-        productError.textContent = "Remplissez tous les champs obligatoires.";
+      const hasRequiredImages = productType === "vierge"
+        ? Boolean(frontImageFile && backImageFile)
+        : imageFiles.length > 0;
+      if (!name || !price || !hasRequiredImages || !description) {
+        productError.textContent = productType === "vierge" && !hasRequiredImages
+          ? "Ajoutez une photo de la face avant et une photo du dos."
+          : "Remplissez tous les champs obligatoires.";
         return;
       }
       if (!productType) {
@@ -2708,7 +2802,11 @@
         return;
       }
 
-      const images = await Promise.all(imageFiles.map(readFileAsDataUrl));
+      const frontImage = productType === "vierge" ? await readFileAsDataUrl(frontImageFile) : null;
+      const backImage = productType === "vierge" ? await readFileAsDataUrl(backImageFile) : null;
+      const images = productType === "vierge"
+        ? [frontImage, backImage]
+        : await Promise.all(imageFiles.map(readFileAsDataUrl));
       const payload = {
         name,
         productType,
@@ -2718,8 +2816,10 @@
         tag: document.getElementById("productTagInput").value.trim() || "Nouveau",
         sizes,
         colors,
-        image: images[0],
+        image: frontImage || images[0],
         images,
+        frontImage,
+        backImage,
         description
       };
 
@@ -2736,9 +2836,13 @@
         renderAdminProducts();
         document.getElementById("productNameInput").value = "";
         document.getElementById("productTypeInput").value = "";
+        document.getElementById("standardProductImagesField").hidden = false;
+        document.getElementById("blankProductImagesField").hidden = true;
         document.getElementById("productPriceInput").value = "";
         document.getElementById("productTagInput").value = "";
         document.getElementById("productImageInput").value = "";
+        document.getElementById("productFrontImageInput").value = "";
+        document.getElementById("productBackImageInput").value = "";
         document.getElementById("productDescriptionInput").value = "";
         document.querySelectorAll('#productSizeOptions input, #productColorOptions input').forEach(input => {
           input.checked = false;
@@ -2747,6 +2851,12 @@
       } catch (error) {
         productError.textContent = error.message || "La publication a échoué.";
       }
+    });
+
+    document.getElementById("productTypeInput").addEventListener("change", event => {
+      const isBlankProduct = event.target.value === "vierge";
+      document.getElementById("standardProductImagesField").hidden = isBlankProduct;
+      document.getElementById("blankProductImagesField").hidden = !isBlankProduct;
     });
 
     document.getElementById("checkoutBtn").addEventListener("click", openCheckoutModal);
@@ -2803,17 +2913,38 @@
     });
 
     designImageInput.addEventListener("change", () => {
-      const file = designImageInput.files[0];
-      if (file && file.size > 5 * 1024 * 1024) {
+      const files = Array.from(designImageInput.files);
+      if (files.length > 5) {
         designImageInput.value = "";
-        customizationError.textContent = "La photo doit faire moins de 5 Mo.";
-      } else {
-        customizationError.textContent = "";
+        customizationError.textContent = "Vous pouvez ajouter jusqu’à 5 photos de design.";
+        return;
       }
+      if (files.some(file => !/^(image\/png|image\/jpeg|image\/webp)$/.test(file.type) || file.size > 5 * 1024 * 1024)) {
+        designImageInput.value = "";
+        customizationError.textContent = "Chaque photo doit être PNG, JPG ou WebP et faire 5 Mo maximum.";
+        return;
+      }
+
+      designObjectUrls.forEach(objectUrl => URL.revokeObjectURL(objectUrl));
+      designFiles = files;
+      designObjectUrls = files.map(file => URL.createObjectURL(file));
+      designSettings = files.map(() => ({ placement: null, x: 50, y: 38, size: 25 }));
+      selectedDesignIndex = 0;
+      designPosition = { x: 50, y: 38, size: 25 };
+      renderDesignPhotoChoices();
+      customizationError.textContent = files.length ? "Choisissez le motif à régler, puis son emplacement." : "";
       updateDesignPreview();
     });
     document.querySelectorAll('input[name="designPlacement"]').forEach(input => {
-      input.addEventListener("change", updateDesignPreview);
+      input.addEventListener("change", () => {
+        const settings = designSettings[selectedDesignIndex];
+        if (!settings) return;
+        settings.placement = input.value;
+        if (input.value === "dos" && settings.y === 38) settings.y = 34;
+        if (input.value === "avant" && settings.y === 34) settings.y = 38;
+        designPosition = { x: settings.x, y: settings.y, size: settings.size };
+        updateDesignPreview();
+      });
     });
     document.querySelectorAll('input[name="deliveryMethod"]').forEach(input => {
       input.addEventListener("change", updateCheckoutTotal);
@@ -2853,8 +2984,8 @@
         const color = item.custom?.color || "Couleur standard";
         const fabric = item.custom?.fabric || "Matière standard";
         const discountLabel = Number(item.discountPercent || 0) > 0 ? ` • Remise: ${item.discountPercent}%` : "";
-        const designLabel = item.designFile
-          ? ` • Design ${item.custom.designPlacement === "avant" ? "avant" : "dos"} • ${Math.round(item.custom.designSize)}% • X ${Math.round(item.custom.designX)}%, Y ${Math.round(item.custom.designY)}%`
+        const designLabel = item.designFiles?.length
+          ? ` • ${item.designFiles.length} motif(s)`
           : "";
         return `${item.name} x${item.quantity} • Type: ${productTypeLabel} • Photo produit: ${Number(item.selectedImageIndex || 0) + 1} • Taille: ${size} • Couleur: ${color} • Matière: ${fabric}${discountLabel}${designLabel} • ${formatPrice(item.price * item.quantity)}`;
       }).join("\n");
@@ -2871,7 +3002,7 @@
         "",
         "Produits:",
         orderDetails,
-        cart.some(item => item.designFile) ? "Design client : fourni" : "Personnalisation : aucun design fourni",
+        cart.some(item => item.designFiles?.length) ? "Design client : fourni" : "Personnalisation : aucun design fourni",
         `Livraison: ${deliveryLabel} - ${formatPrice(selectedDeliveryFee)}`,
         "",
         `Total: ${formatPrice(total)}`
@@ -2905,21 +3036,9 @@
       try {
         const designDetails = [];
         for (const item of cart) {
-          if (!item.designFile) continue;
+          if (!item.designFiles?.length) continue;
 
-          const [imageData, customizedPreviewData] = await Promise.all([
-            readFileAsDataUrl(item.designFile),
-            createCustomizedProductPreview(item)
-          ]);
-          const uploadResponse = await fetch('/api/designs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ imageData })
-          });
-          const uploadResult = await uploadResponse.json();
-          if (!uploadResponse.ok) throw new Error(uploadResult.error || "La photo n’a pas pu être enregistrée.");
-
-          const designUrl = new URL(uploadResult.url, window.location.origin).href;
+          const customizedPreviewData = await createCustomizedProductPreview(item);
           const previewResponse = await fetch('/api/designs', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2929,29 +3048,44 @@
           if (!previewResponse.ok) throw new Error(previewResult.error || "L’aperçu personnalisé n’a pas pu être enregistré.");
 
           const customizedPreviewUrl = new URL(previewResult.url, window.location.origin).href;
-          const designPositionLabel = item.custom.designPlacement === "avant" ? "Avant" : "Dos";
-          const designCoordinates = `X ${Math.round(item.custom.designX)}%, Y ${Math.round(item.custom.designY)}%`;
-          const designSize = `${Math.round(item.custom.designSize)}%`;
+          const uploadedDesigns = [];
+          for (let index = 0; index < item.designFiles.length; index += 1) {
+            const design = item.designFiles[index];
+            const imageData = await readFileAsDataUrl(design.file);
+            const uploadResponse = await fetch('/api/designs', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ imageData })
+            });
+            const uploadResult = await uploadResponse.json();
+            if (!uploadResponse.ok) throw new Error(uploadResult.error || `La photo ${index + 1} n’a pas pu être enregistrée.`);
+
+            uploadedDesigns.push({
+              placement: design.placement === "avant" ? "Avant" : "Dos",
+              coordinates: `X ${Math.round(design.x)}%, Y ${Math.round(design.y)}%`,
+              size: `${Math.round(design.size)}%`,
+              url: new URL(uploadResult.url, window.location.origin).href
+            });
+          }
           designDetails.push({
             name: item.name,
-            placement: designPositionLabel,
-            coordinates: designCoordinates,
-            size: designSize,
-            designUrl,
+            designs: uploadedDesigns,
             customizedPreviewUrl
           });
         }
 
         if (designDetails.length) {
           const attachedDesignDetails = `Produits personnalisés :\n${designDetails.map((detail, index) =>
-            `${index + 1}. ${detail.name} — ${detail.placement}\nPosition : ${detail.coordinates}\nTaille du motif : ${detail.size}\nProduit avec le design : ${detail.customizedPreviewUrl}\nPhoto originale du design : ${detail.designUrl}`
+            `${index + 1}. ${detail.name}\n${detail.designs.map((design, designIndex) => `Motif ${designIndex + 1} — ${design.placement}\nPosition : ${design.coordinates}\nTaille : ${design.size}\nPhoto originale : ${design.url}`).join("\n")}\nProduit avec tous les motifs : ${detail.customizedPreviewUrl}`
           ).join("\n\n")}`;
           templateParams.order = `${templateParams.order}\n\n${attachedDesignDetails}`;
           templateParams.message = templateParams.order;
           templateParams.order_details = `${templateParams.order_details}\n${attachedDesignDetails}`;
           templateParams.products = templateParams.order_details;
-          templateParams.design_placement = designDetails.map((detail, index) => `${index + 1}. ${detail.name} — ${detail.placement}`).join("; ");
-          templateParams.design_image_url = designDetails.map(detail => detail.designUrl).join("; ");
+          templateParams.design_placement = designDetails.map((detail, index) =>
+            `${index + 1}. ${detail.name}: ${detail.designs.map((design, designIndex) => `motif ${designIndex + 1} ${design.placement}`).join(", ")}`
+          ).join("; ");
+          templateParams.design_image_url = designDetails.flatMap(detail => detail.designs.map(design => design.url)).join("; ");
           templateParams.customized_product_image_url = designDetails.map(detail => detail.customizedPreviewUrl).join("; ");
         }
 

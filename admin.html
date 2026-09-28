@@ -316,9 +316,20 @@
         </div>
       </div>
 
-      <div class="field">
+      <div class="field" id="standardProductImagesField">
         <label for="productImageInput">Photos</label>
         <input id="productImageInput" type="file" accept="image/*" multiple />
+      </div>
+
+      <div id="blankProductImagesField" hidden>
+        <div class="field">
+          <label for="productFrontImageInput">Photo de la face avant *</label>
+          <input id="productFrontImageInput" type="file" accept="image/*" />
+        </div>
+        <div class="field">
+          <label for="productBackImageInput">Photo du dos *</label>
+          <input id="productBackImageInput" type="file" accept="image/*" />
+        </div>
       </div>
 
       <div class="field">
@@ -439,11 +450,18 @@
       const isPromotion = document.getElementById('productPromoInput').checked;
       const description = document.getElementById('productDescriptionInput').value.trim();
       const imageFiles = Array.from(document.getElementById('productImageInput').files);
+      const frontImageFile = document.getElementById('productFrontImageInput').files[0];
+      const backImageFile = document.getElementById('productBackImageInput').files[0];
       const sizes = Array.from(document.querySelectorAll('#productSizeOptions input:checked'), input => input.value);
       const colors = Array.from(document.querySelectorAll('#productColorOptions input:checked'), input => input.value);
 
-      if (!name || !price || !description || imageFiles.length === 0) {
-        productError.textContent = 'Remplissez tous les champs et ajoutez au moins une photo.';
+      const hasRequiredImages = productType === 'vierge'
+        ? Boolean(frontImageFile && backImageFile)
+        : imageFiles.length > 0;
+      if (!name || !price || !description || !hasRequiredImages) {
+        productError.textContent = productType === 'vierge'
+          ? 'Ajoutez une photo de la face avant et une photo du dos.'
+          : 'Remplissez tous les champs et ajoutez au moins une photo.';
         productSuccess.textContent = '';
         return;
       }
@@ -459,7 +477,11 @@
       }
 
       try {
-        const images = await Promise.all(imageFiles.map(readFileAsDataUrl));
+        const frontImage = productType === 'vierge' ? await readFileAsDataUrl(frontImageFile) : null;
+        const backImage = productType === 'vierge' ? await readFileAsDataUrl(backImageFile) : null;
+        const images = productType === 'vierge'
+          ? [frontImage, backImage]
+          : await Promise.all(imageFiles.map(readFileAsDataUrl));
         const response = await fetch('/api/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -473,8 +495,10 @@
             isPromotion,
             sizes,
             colors,
-            image: images[0],
+            image: frontImage || images[0],
             images,
+            frontImage,
+            backImage,
             description
           })
         });
@@ -491,6 +515,8 @@
         document.getElementById('productTagInput').value = '';
         document.getElementById('productPromoInput').checked = false;
         document.getElementById('productImageInput').value = '';
+        document.getElementById('productFrontImageInput').value = '';
+        document.getElementById('productBackImageInput').value = '';
         document.getElementById('productDescriptionInput').value = '';
         document.querySelectorAll('#productSizeOptions input, #productColorOptions input').forEach(input => {
           input.checked = false;
@@ -510,6 +536,11 @@
       showLogin();
     });
     document.getElementById('publishProductButton').addEventListener('click', publishProduct);
+    document.getElementById('productTypeInput').addEventListener('change', event => {
+      const isBlankProduct = event.target.value === 'vierge';
+      document.getElementById('standardProductImagesField').hidden = isBlankProduct;
+      document.getElementById('blankProductImagesField').hidden = !isBlankProduct;
+    });
 
     productList.addEventListener('click', async (event) => {
       const editButton = event.target.closest('[data-update-product]');
