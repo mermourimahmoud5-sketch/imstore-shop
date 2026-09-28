@@ -260,6 +260,7 @@
         <select id="productTypeInput">
           <option value="pret_a_porter">Prêt-à-porter</option>
           <option value="vierge">Vierge (personnalisable)</option>
+          <option value="mug">MUGS</option>
         </select>
       </div>
 
@@ -387,12 +388,13 @@
       productList.innerHTML = products.map(product => `
         <div class="product-item">
           <strong>${product.name}</strong>
-          <small>${product.productType === 'vierge' ? 'VIERGE' : 'PRÊT-À-PORTER'} • ${product.isPromotion ? 'PROMO' : product.tag} • ${product.category} • ${Number(product.price).toLocaleString('fr-DZ')} DZD • Stock : ${Number(product.stockQuantity || 0)} • Réduction : ${Number(product.discountPercent || 0)}%</small>
+          <small>${product.productType === 'vierge' ? 'VIERGE' : product.productType === 'mug' ? 'MUGS' : 'PRÊT-À-PORTER'} • ${product.isPromotion ? 'PROMO' : product.tag} • ${product.category} • ${Number(product.price).toLocaleString('fr-DZ')} DZD • Stock : ${Number(product.stockQuantity || 0)} • Réduction : ${Number(product.discountPercent || 0)}%</small>
           <div class="product-edit-row">
             <input type="text" maxlength="60" value="${product.tag || ''}" placeholder="Étiquette" aria-label="Étiquette de ${product.name}" data-product-tag="${product.id}" />
             <select aria-label="Type de ${product.name}" data-product-type="${product.id}">
-              <option value="pret_a_porter" ${product.productType === 'vierge' ? '' : 'selected'}>Prêt-à-porter</option>
+              <option value="pret_a_porter" ${product.productType === 'vierge' || product.productType === 'mug' ? '' : 'selected'}>Prêt-à-porter</option>
               <option value="vierge" ${product.productType === 'vierge' ? 'selected' : ''}>Vierge</option>
+              <option value="mug" ${product.productType === 'mug' ? 'selected' : ''}>MUGS</option>
             </select>
             <button class="secondary" data-update-product="${product.id}" type="button">Enregistrer les modifications</button>
           </div>
@@ -473,7 +475,7 @@
         productSuccess.textContent = '';
         return;
       }
-      if (category !== 'mug' && (!sizes.length || !colors.length)) {
+      if (productType !== 'mug' && category !== 'mug' && (!sizes.length || !colors.length)) {
         productError.textContent = 'Choisissez au moins une taille et une couleur disponibles.';
         productSuccess.textContent = '';
         return;
@@ -516,8 +518,11 @@
         document.getElementById('productPriceInput').value = '';
         document.getElementById('productStockInput').value = '0';
         document.getElementById('productCategoryInput').value = 'homme';
+        document.getElementById('productTypeInput').value = 'pret_a_porter';
         document.getElementById('productSizesField').hidden = false;
         document.getElementById('productColorsField').hidden = false;
+        document.getElementById('standardProductImagesField').hidden = false;
+        document.getElementById('blankProductImagesField').hidden = true;
         document.getElementById('productTagInput').value = '';
         document.getElementById('productPromoInput').checked = false;
         document.getElementById('productImageInput').value = '';
@@ -544,11 +549,21 @@
     document.getElementById('publishProductButton').addEventListener('click', publishProduct);
     document.getElementById('productTypeInput').addEventListener('change', event => {
       const isBlankProduct = event.target.value === 'vierge';
+      const isMug = event.target.value === 'mug';
+      if (isMug) document.getElementById('productCategoryInput').value = 'mug';
+      else if (document.getElementById('productCategoryInput').value === 'mug') document.getElementById('productCategoryInput').value = 'homme';
       document.getElementById('standardProductImagesField').hidden = isBlankProduct;
       document.getElementById('blankProductImagesField').hidden = !isBlankProduct;
+      document.getElementById('productSizesField').hidden = isMug || document.getElementById('productCategoryInput').value === 'mug';
+      document.getElementById('productColorsField').hidden = isMug || document.getElementById('productCategoryInput').value === 'mug';
     });
     document.getElementById('productCategoryInput').addEventListener('change', event => {
       const isMug = event.target.value === 'mug';
+      if (isMug) document.getElementById('productTypeInput').value = 'mug';
+      else if (document.getElementById('productTypeInput').value === 'mug') document.getElementById('productTypeInput').value = 'pret_a_porter';
+      const isBlankProduct = document.getElementById('productTypeInput').value === 'vierge';
+      document.getElementById('standardProductImagesField').hidden = isBlankProduct;
+      document.getElementById('blankProductImagesField').hidden = !isBlankProduct;
       document.getElementById('productSizesField').hidden = isMug;
       document.getElementById('productColorsField').hidden = isMug;
     });

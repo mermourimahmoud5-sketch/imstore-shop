@@ -1539,6 +1539,7 @@
               <option value="">Choisissez un type</option>
               <option value="pret_a_porter">Prêt-à-porter</option>
               <option value="vierge">Vierge (personnalisable)</option>
+              <option value="mug">MUGS</option>
             </select>
           </div>
           <div class="field">
@@ -1978,6 +1979,10 @@
       return Number((Number(price) * (1 - Number(discountPercent || 0) / 100)).toFixed(2));
     }
 
+    function isMugProduct(product) {
+      return product?.productType === "mug" || product?.category === "mug";
+    }
+
     function readFileAsDataUrl(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -2236,13 +2241,14 @@
         <div class="admin-product-row">
           <div>
             <strong>${product.name}</strong>
-            <small>${product.productType === "vierge" ? "Vierge" : "Prêt-à-porter"} • Stock actuel : ${Number(product.stockQuantity || 0)}</small>
+            <small>${product.productType === "vierge" ? "Vierge" : isMugProduct(product) ? "MUGS" : "Prêt-à-porter"} • Stock actuel : ${Number(product.stockQuantity || 0)}</small>
           </div>
           <div class="admin-product-edit">
             <input type="text" maxlength="60" value="${product.tag || ""}" placeholder="Étiquette" aria-label="Étiquette de ${product.name}" data-product-tag="${product.id}" />
             <select aria-label="Type de ${product.name}" data-product-type="${product.id}">
-              <option value="pret_a_porter" ${product.productType === "vierge" ? "" : "selected"}>Prêt-à-porter</option>
+              <option value="pret_a_porter" ${product.productType === "vierge" || product.productType === "mug" ? "" : "selected"}>Prêt-à-porter</option>
               <option value="vierge" ${product.productType === "vierge" ? "selected" : ""}>Vierge</option>
+              <option value="mug" ${product.productType === "mug" ? "selected" : ""}>MUGS</option>
             </select>
             <button class="mini-btn secondary" data-admin-edit-product="${product.id}" type="button">Enregistrer</button>
           </div>
@@ -2266,7 +2272,11 @@
 
     function renderProducts(filter = "all") {
       productContainer.innerHTML = "";
-      const filteredProducts = filter === "all" ? products : products.filter(product => product.category === filter);
+      const filteredProducts = filter === "all"
+        ? products
+        : filter === "mug"
+          ? products.filter(isMugProduct)
+          : products.filter(product => product.category === filter);
 
       const allSizes = ["XS", "S", "M", "L", "XL", "XXL"];
       const colorMap = {
@@ -2312,7 +2322,7 @@
             <h3 class="product-name">${product.name}</h3>
             <p class="product-desc">${product.description}</p>
             ${isOutOfStock ? '<p class="product-stock out-of-stock">Indisponible</p>' : ""}
-            <div class="product-options" ${product.category === "mug" ? "hidden" : ""}>
+            <div class="product-options" ${isMugProduct(product) ? "hidden" : ""}>
               <div class="product-option">
                 <span>Taille</span>
                 <div class="product-size-picker" data-product-size-group>
@@ -2349,7 +2359,7 @@
                 ${discountPercent > 0 ? `<span class="price-old">${formatPrice(product.price)}</span><span class="discount-badge">-${discountPercent}%</span>` : ""}
               </div>
               <div class="card-actions">
-                ${product.productType === "vierge" || product.category === "mug" ? `<button class="mini-btn secondary" data-action="customize" data-id="${product.id}" ${isOutOfStock ? "disabled" : ""}>Personnaliser</button>` : ""}
+                ${product.productType === "vierge" || isMugProduct(product) ? `<button class="mini-btn secondary" data-action="customize" data-id="${product.id}" ${isOutOfStock ? "disabled" : ""}>Personnaliser</button>` : ""}
                 <button class="mini-btn" data-action="add" data-id="${product.id}" ${isOutOfStock ? "disabled" : ""}>${isOutOfStock ? "Indisponible" : "Ajouter"}</button>
               </div>
             </div>
@@ -2442,7 +2452,7 @@
         cart.forEach(item => {
           const itemEl = document.createElement("div");
           itemEl.className = "cart-item";
-          const customInfo = item.category === "mug"
+          const customInfo = isMugProduct(item)
             ? (item.designFiles?.length ? "Mug personnalisé" : "Mug standard")
             : item.custom && Object.keys(item.custom).length ? `Taille: ${item.custom.size} • Matière: ${item.custom.fabric}` : "Finition standard";
 
@@ -2450,7 +2460,7 @@
             <img src="${item.selectedImage || item.image}" alt="${item.name} - photo ${(item.selectedImageIndex || 0) + 1}" />
             <div class="cart-item-info">
               <div class="cart-item-name">${item.name}</div>
-              <div class="cart-item-meta">${customInfo}${item.category === "mug" ? "" : `<br />${item.custom.color || "Couleur standard"}<br />Photo ${(item.selectedImageIndex || 0) + 1}`}${item.designFiles?.length ? `<br />${item.designFiles.length} photo(s) de design jointe(s)` : ""}</div>
+              <div class="cart-item-meta">${customInfo}${isMugProduct(item) ? "" : `<br />${item.custom.color || "Couleur standard"}<br />Photo ${(item.selectedImageIndex || 0) + 1}`}${item.designFiles?.length ? `<br />${item.designFiles.length} photo(s) de design jointe(s)` : ""}</div>
               <div class="cart-item-price">
                 ${formatPrice(item.price)}
                 ${Number(item.discountPercent || 0) > 0 ? `<span class="price-old">${formatPrice(item.originalPrice ?? item.price)}</span><span class="discount-badge">-${item.discountPercent}%</span>` : ""}
@@ -2480,7 +2490,7 @@
       const mainImage = card?.querySelector(".product-main-image");
       selectedProductImage = mainImage?.getAttribute("src") || product.image;
       selectedProductImageIndex = Number(mainImage?.dataset.photoIndex || 0);
-      const isMug = product.category === "mug";
+      const isMug = isMugProduct(product);
       const canCustomize = product.productType === "vierge" || isMug;
       if (!canCustomize) return;
       customizerStandardFields.hidden = isMug;
@@ -2768,7 +2778,7 @@
       if (!selectedProductId) return;
 
       const product = products.find(item => item.id === selectedProductId);
-      const isMug = product?.category === "mug";
+      const isMug = isMugProduct(product);
       const selectedDesignFiles = product?.productType === "vierge" || isMug ? designFiles : [];
       if (isMug && selectedDesignFiles.length !== 1) {
         customizationError.textContent = "Ajoutez une photo du design du Mug pour continuer.";
@@ -2881,7 +2891,7 @@
         productError.textContent = "Saisissez un stock initial entier supérieur ou égal à zéro.";
         return;
       }
-      if (category !== "mug" && (!sizes.length || !colors.length)) {
+      if (productType !== "mug" && category !== "mug" && (!sizes.length || !colors.length)) {
         productError.textContent = "Choisissez au moins une taille et une couleur disponibles.";
         return;
       }
@@ -2942,12 +2952,22 @@
 
     document.getElementById("productTypeInput").addEventListener("change", event => {
       const isBlankProduct = event.target.value === "vierge";
+      const isMug = event.target.value === "mug";
+      if (isMug) document.getElementById("productCategoryInput").value = "mug";
+      else if (document.getElementById("productCategoryInput").value === "mug") document.getElementById("productCategoryInput").value = "femme";
       document.getElementById("standardProductImagesField").hidden = isBlankProduct;
       document.getElementById("blankProductImagesField").hidden = !isBlankProduct;
+      document.getElementById("productSizesField").hidden = isMug || document.getElementById("productCategoryInput").value === "mug";
+      document.getElementById("productColorsField").hidden = isMug || document.getElementById("productCategoryInput").value === "mug";
     });
 
     document.getElementById("productCategoryInput").addEventListener("change", event => {
       const isMug = event.target.value === "mug";
+      if (isMug) document.getElementById("productTypeInput").value = "mug";
+      else if (document.getElementById("productTypeInput").value === "mug") document.getElementById("productTypeInput").value = "pret_a_porter";
+      const isBlankProduct = document.getElementById("productTypeInput").value === "vierge";
+      document.getElementById("standardProductImagesField").hidden = isBlankProduct;
+      document.getElementById("blankProductImagesField").hidden = !isBlankProduct;
       document.getElementById("productSizesField").hidden = isMug;
       document.getElementById("productColorsField").hidden = isMug;
     });
@@ -3075,7 +3095,7 @@
 
       const orderNumber = `IM-${Date.now().toString().slice(-6)}`;
       const orderDetails = cart.map(item => {
-        if (item.category === "mug") {
+        if (isMugProduct(item)) {
           const designNote = item.designFiles?.length ? " • Photo du design jointe" : "";
           const discountLabel = Number(item.discountPercent || 0) > 0 ? ` • Remise: ${item.discountPercent}%` : "";
           return `${item.name} x${item.quantity} • Mug${designNote}${discountLabel} • ${formatPrice(item.price * item.quantity)}`;
@@ -3139,7 +3159,7 @@
         for (const item of cart) {
           if (!item.designFiles?.length) continue;
 
-          if (item.category === "mug") {
+          if (isMugProduct(item)) {
             const uploadedDesigns = [];
             for (let index = 0; index < item.designFiles.length; index += 1) {
               const imageData = await readFileAsDataUrl(item.designFiles[index].file);

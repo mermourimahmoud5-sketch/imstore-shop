@@ -53,7 +53,7 @@ app.post('/api/products', async (req, res) => {
   if (!name || !category || !Number.isFinite(numericPrice) || numericPrice <= 0 || !description || !(image || frontImage)) {
     return res.status(400).json({ error: 'Tous les champs obligatoires sont requis.' });
   }
-  if (!['pret_a_porter', 'vierge'].includes(normalizedProductType)) {
+  if (!['pret_a_porter', 'vierge', 'mug'].includes(normalizedProductType)) {
     return res.status(400).json({ error: 'Choisissez un type de produit valide.' });
   }
   if (normalizedProductType === 'vierge' && (!frontImage || !backImage)) {
@@ -98,7 +98,7 @@ app.patch('/api/products/:id', async (req, res) => {
   const values = [];
 
   if (Object.prototype.hasOwnProperty.call(req.body || {}, 'productType')) {
-    if (!['pret_a_porter', 'vierge'].includes(req.body.productType)) {
+    if (!['pret_a_porter', 'vierge', 'mug'].includes(req.body.productType)) {
       return res.status(400).json({ error: 'Choisissez un type de produit valide.' });
     }
     values.push(req.body.productType);
