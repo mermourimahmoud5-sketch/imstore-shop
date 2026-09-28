@@ -73,6 +73,8 @@
       margin-bottom: 14px;
     }
 
+    .field[hidden] { display: none; }
+
     label {
       display: block;
       margin-bottom: 7px;
@@ -277,6 +279,7 @@
           <option value="homme">Homme</option>
           <option value="femme">Femme</option>
           <option value="ensemble">Ensemble</option>
+          <option value="mug">Mug</option>
         </select>
       </div>
 
@@ -290,7 +293,7 @@
         <span>Produit en promotion</span>
       </label>
 
-      <div class="field">
+      <div class="field" id="productSizesField">
         <label>Tailles disponibles *</label>
         <div class="variant-options" id="productSizeOptions">
           <label class="variant-option"><input type="checkbox" value="XS" /> XS</label>
@@ -302,7 +305,7 @@
         </div>
       </div>
 
-      <div class="field">
+      <div class="field" id="productColorsField">
         <label>Couleurs disponibles *</label>
         <div class="variant-options" id="productColorOptions">
           <label class="variant-option"><input type="checkbox" value="Noir" /> Noir</label>
@@ -470,7 +473,7 @@
         productSuccess.textContent = '';
         return;
       }
-      if (!sizes.length || !colors.length) {
+      if (category !== 'mug' && (!sizes.length || !colors.length)) {
         productError.textContent = 'Choisissez au moins une taille et une couleur disponibles.';
         productSuccess.textContent = '';
         return;
@@ -512,6 +515,9 @@
         document.getElementById('productNameInput').value = '';
         document.getElementById('productPriceInput').value = '';
         document.getElementById('productStockInput').value = '0';
+        document.getElementById('productCategoryInput').value = 'homme';
+        document.getElementById('productSizesField').hidden = false;
+        document.getElementById('productColorsField').hidden = false;
         document.getElementById('productTagInput').value = '';
         document.getElementById('productPromoInput').checked = false;
         document.getElementById('productImageInput').value = '';
@@ -540,6 +546,11 @@
       const isBlankProduct = event.target.value === 'vierge';
       document.getElementById('standardProductImagesField').hidden = isBlankProduct;
       document.getElementById('blankProductImagesField').hidden = !isBlankProduct;
+    });
+    document.getElementById('productCategoryInput').addEventListener('change', event => {
+      const isMug = event.target.value === 'mug';
+      document.getElementById('productSizesField').hidden = isMug;
+      document.getElementById('productColorsField').hidden = isMug;
     });
 
     productList.addEventListener('click', async (event) => {
