@@ -1159,6 +1159,9 @@
     .admin-discount-actions { display: flex; align-items: center; gap: 8px; }
     .admin-discount-actions input { width: 82px; padding: 8px; }
     .admin-discount-actions .mini-btn { padding: 8px 10px; }
+    .admin-product-edit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; }
+    .admin-product-edit input, .admin-product-edit select { min-width: 0; padding: 8px; }
+    .admin-product-edit .mini-btn { padding: 8px 10px; }
     .mini-btn.danger { background: #f8e6e1; color: #9b3028; }
     .mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .product-stock { margin: 8px 0 0; color: var(--success); font-size: 0.85rem; font-weight: 700; }
@@ -1999,6 +2002,14 @@
             <strong>${product.name}</strong>
             <small>${product.productType === "vierge" ? "Vierge" : "Prêt-à-porter"} • Stock actuel : ${Number(product.stockQuantity || 0)}</small>
           </div>
+          <div class="admin-product-edit">
+            <input type="text" maxlength="60" value="${product.tag || ""}" placeholder="Étiquette" aria-label="Étiquette de ${product.name}" data-product-tag="${product.id}" />
+            <select aria-label="Type de ${product.name}" data-product-type="${product.id}">
+              <option value="pret_a_porter" ${product.productType === "vierge" ? "" : "selected"}>Prêt-à-porter</option>
+              <option value="vierge" ${product.productType === "vierge" ? "selected" : ""}>Vierge</option>
+            </select>
+            <button class="mini-btn secondary" data-admin-edit-product="${product.id}" type="button">Enregistrer</button>
+          </div>
           <div class="admin-stock-actions">
             <input type="number" min="0" step="1" value="${Number(product.stockQuantity || 0)}" aria-label="Stock de ${product.name}" data-stock-input="${product.id}" />
             <button class="mini-btn secondary" data-admin-stock="${product.id}" type="button">Enregistrer</button>
@@ -2380,6 +2391,36 @@
             products = products.filter(product => product.id !== id);
             renderProducts();
             renderAdminProducts();
+          });
+      }
+
+      const editProductButton = event.target.closest("[data-admin-edit-product]");
+      if (editProductButton) {
+        const productId = Number(editProductButton.dataset.adminEditProduct);
+        const tagInput = adminProducts.querySelector(`[data-product-tag="${productId}"]`);
+        const typeInput = adminProducts.querySelector(`[data-product-type="${productId}"]`);
+        editProductButton.disabled = true;
+        fetch(`/api/products/${productId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tag: tagInput.value, productType: typeInput.value })
+        })
+          .then(async response => {
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || "La modification a échoué.");
+            return result;
+          })
+          .then(updatedProduct => {
+            products = products.map(product => product.id === updatedProduct.id ? updatedProduct : product);
+            renderAdminProducts();
+            renderProducts(document.querySelector("[data-filter].active")?.dataset.filter || "all");
+            productError.className = "checkout-status";
+            productError.textContent = "Publication mise à jour.";
+          })
+          .catch(error => {
+            productError.className = "admin-error";
+            productError.textContent = error.message || "Impossible de modifier le produit.";
+            editProductButton.disabled = false;
           });
       }
 

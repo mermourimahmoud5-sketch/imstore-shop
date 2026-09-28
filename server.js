@@ -86,6 +86,44 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
+app.patch('/api/products/:id', async (req, res) => {
+  const updates = [];
+  const values = [];
+
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, 'productType')) {
+    if (!['pret_a_porter', 'vierge'].includes(req.body.productType)) {
+      return res.status(400).json({ error: 'Choisissez un type de produit valide.' });
+    }
+    values.push(req.body.productType);
+    updates.push(`product_type = $${values.length}`);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, 'tag')) {
+    if (typeof req.body.tag !== 'string' || req.body.tag.length > 60) {
+      return res.status(400).json({ error: 'L’étiquette doit contenir au maximum 60 caractères.' });
+    }
+    values.push(req.body.tag.trim());
+    updates.push(`tag = $${values.length}`);
+  }
+
+  if (!updates.length) {
+    return res.status(400).json({ error: 'Aucune modification valide à enregistrer.' });
+  }
+
+  try {
+    values.push(req.params.id);
+    const result = await pool.query(
+      `UPDATE products SET ${updates.join(', ')} WHERE id = $${values.length} RETURNING *`,
+      values
+    );
+    if (!result.rowCount) return res.status(404).json({ error: 'Produit introuvable.' });
+    res.json(formatProduct(result.rows[0]));
+  } catch (error) {
+    console.error('Erreur de mise à jour du produit :', error);
+    res.status(500).json({ error: 'Impossible de modifier le produit.' });
+  }
+});
+
 app.patch('/api/products/:id/stock', async (req, res) => {
   const stockQuantity = Number(req.body && req.body.stockQuantity);
   if (!Number.isInteger(stockQuantity) || stockQuantity < 0) {

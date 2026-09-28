@@ -183,6 +183,14 @@
     }
     .discount-row input { min-width: 0; padding: 10px; }
     .discount-row button { padding: 10px; }
+    .product-edit-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .product-edit-row input, .product-edit-row select { min-width: 0; padding: 10px; }
+    .product-edit-row button { grid-column: 1 / -1; padding: 10px; }
 
     .link {
       display: inline-block;
@@ -366,6 +374,14 @@
         <div class="product-item">
           <strong>${product.name}</strong>
           <small>${product.productType === 'vierge' ? 'VIERGE' : 'PRÊT-À-PORTER'} • ${product.isPromotion ? 'PROMO' : product.tag} • ${product.category} • ${Number(product.price).toLocaleString('fr-DZ')} DZD • Stock : ${Number(product.stockQuantity || 0)} • Réduction : ${Number(product.discountPercent || 0)}%</small>
+          <div class="product-edit-row">
+            <input type="text" maxlength="60" value="${product.tag || ''}" placeholder="Étiquette" aria-label="Étiquette de ${product.name}" data-product-tag="${product.id}" />
+            <select aria-label="Type de ${product.name}" data-product-type="${product.id}">
+              <option value="pret_a_porter" ${product.productType === 'vierge' ? '' : 'selected'}>Prêt-à-porter</option>
+              <option value="vierge" ${product.productType === 'vierge' ? 'selected' : ''}>Vierge</option>
+            </select>
+            <button class="secondary" data-update-product="${product.id}" type="button">Enregistrer les modifications</button>
+          </div>
           <div class="admin-row">
             <input type="number" min="0" step="1" value="${Number(product.stockQuantity || 0)}" aria-label="Stock de ${product.name}" data-stock-input="${product.id}" />
             <button class="secondary" data-stock="${product.id}" type="button">Enregistrer stock</button>
@@ -496,6 +512,31 @@
     document.getElementById('publishProductButton').addEventListener('click', publishProduct);
 
     productList.addEventListener('click', async (event) => {
+      const editButton = event.target.closest('[data-update-product]');
+      if (editButton) {
+        const id = Number(editButton.dataset.updateProduct);
+        const tagInput = productList.querySelector(`[data-product-tag="${id}"]`);
+        const typeInput = productList.querySelector(`[data-product-type="${id}"]`);
+        editButton.disabled = true;
+        try {
+          const response = await fetch(`/api/products/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tag: tagInput.value, productType: typeInput.value })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || 'Modification impossible.');
+          productError.textContent = '';
+          productSuccess.textContent = 'Publication mise à jour.';
+          await renderProducts();
+        } catch (error) {
+          productError.textContent = error.message || 'Modification impossible.';
+          productSuccess.textContent = '';
+          editButton.disabled = false;
+        }
+        return;
+      }
+
       const discountButton = event.target.closest('[data-discount]');
       if (discountButton) {
         const id = Number(discountButton.dataset.discount);
