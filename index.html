@@ -1103,6 +1103,18 @@
 
     .design-scale-control input { grid-column: 1 / -1; accent-color: var(--gold-dark); }
 
+    .design-zoom-control {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 8px 12px;
+      width: min(320px, 100%);
+    }
+
+    .design-zoom-control label { font-weight: 700; }
+
+    .design-zoom-control input { grid-column: 1 / -1; accent-color: var(--gold-dark); }
+
     .design-preview-position {
       position: absolute;
       right: 8px;
@@ -1369,6 +1381,11 @@
             <label for="designScaleInput">Taille du design</label>
             <output id="designScaleValue" for="designScaleInput">25%</output>
             <input id="designScaleInput" type="range" min="5" max="80" value="25" aria-label="Taille du design" />
+          </div>
+          <div class="design-zoom-control">
+            <label for="designProductZoomInput">Zoom du produit</label>
+            <output id="designProductZoomValue" for="designProductZoomInput">1×</output>
+            <input id="designProductZoomInput" type="range" min="1" max="2.5" step="0.1" value="1" aria-label="Zoom du produit" />
           </div>
           <p class="design-preview-note">Déplacez le motif sur l’aperçu pour choisir sa position.</p>
         </div>
@@ -1826,6 +1843,8 @@
     const designPreviewPosition = document.getElementById("designPreviewPosition");
     const designScaleInput = document.getElementById("designScaleInput");
     const designScaleValue = document.getElementById("designScaleValue");
+    const designProductZoomInput = document.getElementById("designProductZoomInput");
+    const designProductZoomValue = document.getElementById("designProductZoomValue");
     const orderEmail = "mermourimahmoud833@gmail.com";
 
     let selectedProductId = null;
@@ -1838,6 +1857,7 @@
     let designPreviewPlacement = null;
     let designDragPointerId = null;
     let designPosition = { x: 50, y: 38, size: 25 };
+    let designProductZoom = 1;
     let designSelectionId = 0;
 
     function formatPrice(price) {
@@ -1857,6 +1877,61 @@
       });
     }
 
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        if (!src.startsWith("data:") && !src.startsWith("blob:")) image.crossOrigin = "anonymous";
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("Impossible de préparer l’aperçu du produit."));
+        image.src = src;
+      });
+    }
+
+    async function createCustomizedProductPreview(item) {
+      const productImage = await loadImage(item.selectedImage || item.image);
+      const designImage = await loadImage(await readFileAsDataUrl(item.designFile));
+      const canvas = document.createElement("canvas");
+      canvas.width = 900;
+      canvas.height = 1125;
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      const zoom = Number(item.custom.designProductZoom || 1);
+      const productScale = Math.min(
+        canvas.width / productImage.naturalWidth,
+        canvas.height / productImage.naturalHeight
+      ) * zoom;
+      const productWidth = productImage.naturalWidth * productScale;
+      const productHeight = productImage.naturalHeight * productScale;
+      context.drawImage(
+        productImage,
+        (canvas.width - productWidth) / 2,
+        (canvas.height - productHeight) / 2,
+        productWidth,
+        productHeight
+      );
+
+      let artworkWidth = canvas.width * Number(item.custom.designSize) / 100;
+      let artworkHeight = artworkWidth * designImage.naturalHeight / designImage.naturalWidth;
+      const maxArtworkHeight = canvas.height * 0.8;
+      if (artworkHeight > maxArtworkHeight) {
+        const scale = maxArtworkHeight / artworkHeight;
+        artworkWidth *= scale;
+        artworkHeight = maxArtworkHeight;
+      }
+      const centerX = canvas.width * Number(item.custom.designX) / 100;
+      const centerY = canvas.height * Number(item.custom.designY) / 100;
+      context.drawImage(
+        designImage,
+        centerX - artworkWidth / 2,
+        centerY - artworkHeight / 2,
+        artworkWidth,
+        artworkHeight
+      );
+      return canvas.toDataURL("image/jpeg", 0.82);
+    }
+
     function updateDesignPreview() {
       const file = designImageInput.files[0];
       const placement = document.querySelector('input[name="designPlacement"]:checked')?.value;
@@ -1868,6 +1943,7 @@
 
       designPreviewProduct.src = selectedProductImage || designProduct.images?.[0] || designProduct.image;
       designPreviewProduct.alt = `Aperçu de ${designProduct.name}`;
+      designPreviewProduct.style.transform = `scale(${designProductZoom})`;
       if (file !== designPreviewFile || placement !== designPreviewPlacement) {
         designPosition = {
           x: 50,
@@ -1904,9 +1980,13 @@
       designPreviewFile = null;
       designPreviewPlacement = null;
       designPosition = { x: 50, y: 38, size: 25 };
+      designProductZoom = 1;
       designScaleInput.value = "25";
       designScaleValue.value = "25%";
       designScaleValue.textContent = "25%";
+      designProductZoomInput.value = "1";
+      designProductZoomValue.value = "1×";
+      designProductZoomValue.textContent = "1×";
       customizationError.textContent = "";
     }
 
@@ -2540,7 +2620,8 @@
         designPlacement: designFile ? designPlacement : null,
         designX: designFile ? designPosition.x : null,
         designY: designFile ? designPosition.y : null,
-        designSize: designFile ? designPosition.size : null
+        designSize: designFile ? designPosition.size : null,
+        designProductZoom: designFile ? designProductZoom : null
       };
 
       addToCart(selectedProductId, custom, selectedProductImage, selectedProductImageIndex, designFile);
@@ -2692,6 +2773,13 @@
       updateDesignArtworkTransform();
     });
 
+    designProductZoomInput.addEventListener("input", () => {
+      designProductZoom = Number(designProductZoomInput.value);
+      designProductZoomValue.value = `${designProductZoom.toFixed(1)}×`;
+      designProductZoomValue.textContent = `${designProductZoom.toFixed(1)}×`;
+      designPreviewProduct.style.transform = `scale(${designProductZoom})`;
+    });
+
     designPreviewArtwork.addEventListener("pointerdown", event => {
       if (designPreviewSection.hidden) return;
       event.preventDefault();
@@ -2819,7 +2907,10 @@
         for (const item of cart) {
           if (!item.designFile) continue;
 
-          const imageData = await readFileAsDataUrl(item.designFile);
+          const [imageData, customizedPreviewData] = await Promise.all([
+            readFileAsDataUrl(item.designFile),
+            createCustomizedProductPreview(item)
+          ]);
           const uploadResponse = await fetch('/api/designs', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2829,20 +2920,39 @@
           if (!uploadResponse.ok) throw new Error(uploadResult.error || "La photo n’a pas pu être enregistrée.");
 
           const designUrl = new URL(uploadResult.url, window.location.origin).href;
+          const previewResponse = await fetch('/api/designs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageData: customizedPreviewData })
+          });
+          const previewResult = await previewResponse.json();
+          if (!previewResponse.ok) throw new Error(previewResult.error || "L’aperçu personnalisé n’a pas pu être enregistré.");
+
+          const customizedPreviewUrl = new URL(previewResult.url, window.location.origin).href;
           const designPositionLabel = item.custom.designPlacement === "avant" ? "Avant" : "Dos";
           const designCoordinates = `X ${Math.round(item.custom.designX)}%, Y ${Math.round(item.custom.designY)}%`;
           const designSize = `${Math.round(item.custom.designSize)}%`;
-          designDetails.push(`${item.name} — ${designPositionLabel}\nPosition : ${designCoordinates}\nTaille : ${designSize}\nPhoto du design : ${designUrl}`);
+          designDetails.push({
+            name: item.name,
+            placement: designPositionLabel,
+            coordinates: designCoordinates,
+            size: designSize,
+            designUrl,
+            customizedPreviewUrl
+          });
         }
 
         if (designDetails.length) {
-          const attachedDesignDetails = `Designs clients :\n${designDetails.join("\n\n")}`;
+          const attachedDesignDetails = `Produits personnalisés :\n${designDetails.map((detail, index) =>
+            `${index + 1}. ${detail.name} — ${detail.placement}\nPosition : ${detail.coordinates}\nTaille du motif : ${detail.size}\nProduit avec le design : ${detail.customizedPreviewUrl}\nPhoto originale du design : ${detail.designUrl}`
+          ).join("\n\n")}`;
           templateParams.order = `${templateParams.order}\n\n${attachedDesignDetails}`;
           templateParams.message = templateParams.order;
           templateParams.order_details = `${templateParams.order_details}\n${attachedDesignDetails}`;
           templateParams.products = templateParams.order_details;
-          templateParams.design_placement = designDetails.map((detail, index) => `${index + 1}. ${detail.split("\n")[0]}`).join("; ");
-          templateParams.design_image_url = designDetails.map(detail => detail.split("Photo du design : ")[1]).join("; ");
+          templateParams.design_placement = designDetails.map((detail, index) => `${index + 1}. ${detail.name} — ${detail.placement}`).join("; ");
+          templateParams.design_image_url = designDetails.map(detail => detail.designUrl).join("; ");
+          templateParams.customized_product_image_url = designDetails.map(detail => detail.customizedPreviewUrl).join("; ");
         }
 
         await emailjs.send("service_546aau2", "template_riyvbb9", templateParams);
